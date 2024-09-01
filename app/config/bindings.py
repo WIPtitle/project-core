@@ -3,10 +3,6 @@ from typing import Callable, get_type_hints
 
 from app.database.database_connector import DatabaseConnector
 from app.database.impl.database_connector_impl import DatabaseConnectorImpl
-from app.repositories.gpio_config.gpio_config_repository import GpioConfigRepository
-from app.repositories.gpio_config.impl.gpio_config_repository_impl import GpioConfigRepositoryImpl
-from app.services.gpio_config.gpio_config_service import GpioConfigService
-from app.services.gpio_config.impl.gpio_config_service_impl import GpioConfigServiceImpl
 
 bindings = { }
 

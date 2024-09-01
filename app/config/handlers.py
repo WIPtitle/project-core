@@ -1,5 +1,5 @@
-from fastapi.responses import JSONResponse
 from fastapi import Request
+from fastapi.responses import JSONResponse
 
 from app.exceptions.BadRequestException import BadRequestException
 from app.exceptions.NotFoundException import NotFoundException
