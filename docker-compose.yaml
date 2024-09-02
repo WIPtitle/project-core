@@ -1,0 +1,58 @@
+x-common-variables: &common-variables
+   PG_CREDENTIALS_FILE: /shared/pg_credentials.json
+   RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
+
+# Careful! Service names are sometimes referred in other projects instead of ip addresses, be mindful of that
+# if changing their names.
+# TODO solve this by centralizing the place where containers name are set, if possible
+services:
+  db:
+    image: postgres:16.4
+    environment: *common-variables
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - shared:/shared
+      - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
+    expose:
+      - "5432"
+    command: ["/bin/bash", "/usr/bin/database_entrypoint.sh"]
+    restart: on-failure
+
+  rabbitmq:
+    image: rabbitmq:3.13.7
+    environment: *common-variables
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/data
+      - shared:/shared
+      - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
+    expose:
+      - "5672"
+    command: ["/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh"]
+    restart: on-failure
+
+  project-proxy:
+    build: microservices/project-proxy
+    environment: *common-variables
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - shared:/shared
+    restart: on-failure
+
+  magnetic-reeds-listener:
+    build: microservices/magnetic-reeds-listener
+    environment: *common-variables
+    expose:
+      - "8000"
+    depends_on:
+      - db
+    volumes:
+      - shared:/shared
+    restart: on-failure
+
+volumes:
+  db-data:
+  rabbitmq-data:
+  shared:
