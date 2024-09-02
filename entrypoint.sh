@@ -2,6 +2,8 @@
 
 cd /app
 
+pip install --upgrade pip
+
 apt-get update && apt-get install -y libpq-dev git
 pip install --no-cache-dir -r requirements.txt
 
