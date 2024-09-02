@@ -47,6 +47,7 @@ services:
     depends_on:
       - database
     volumes:
+      - proxy-data:/var/lib/proxy/data
       - shared:/shared
     restart: on-failure
 
@@ -59,6 +60,7 @@ services:
     depends_on:
       - database
     volumes:
+      - reeds-listener-data:/var/lib/reeds-listener/data
       - shared:/shared
     restart: on-failure
 
@@ -66,3 +68,5 @@ volumes:
   db-data:
   rabbitmq-data:
   shared:
+  proxy-data:
+  reeds-listener-data:
