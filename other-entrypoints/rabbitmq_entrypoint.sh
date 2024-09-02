@@ -6,9 +6,10 @@
 # to a file mounted on a shared volume, and then uses them to start RabbitMQ.
 
 CREDENTIALS_FILE=${RBBT_CREDENTIALS_FILE}
-echo "Saving RabbitMQ credentials to ${RBBT_CREDENTIALS_FILE}"
+echo "Searching RabbitMQ credentials in ${RBBT_CREDENTIALS_FILE}"
 
 if [ ! -f "$CREDENTIALS_FILE" ]; then
+    echo "No credentials found, generating new credentials..."
     RABBITMQ_PASSWORD=$(openssl rand -base64 32)
 
     cat <<EOF > "$CREDENTIALS_FILE"
@@ -21,6 +22,8 @@ fi
 
 RABBITMQ_USER=$(awk -F'"' '/RABBITMQ_USER/ {print $4}' "$CREDENTIALS_FILE")
 RABBITMQ_PASSWORD=$(awk -F'"' '/RABBITMQ_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
+
+echo "RabbitMQ username: ${RABBITMQ_USER}"
 
 export RABBITMQ_DEFAULT_USER=$RABBITMQ_USER
 export RABBITMQ_DEFAULT_PASS=$RABBITMQ_PASSWORD

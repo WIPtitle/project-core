@@ -8,8 +8,8 @@ x-common-variables: &common-variables
     MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
-    PG_CREDENTIALS_FILE: shared/pg_credentials.json
-    RBBT_CREDENTIALS_FILE: shared/rbbt_credentials.json
+    PG_CREDENTIALS_FILE: /shared/pg_credentials.json
+    RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
 
 services:
   database:

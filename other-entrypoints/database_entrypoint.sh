@@ -6,9 +6,10 @@
 # to a file mounted on a shared volume, and then export them as envs for Postgres.
 
 CREDENTIALS_FILE=${PG_CREDENTIALS_FILE}
-echo "Saving Postgres credentials to ${PG_CREDENTIALS_FILE}"
+echo "Searching Postgres credentials in ${PG_CREDENTIALS_FILE}"
 
 if [ ! -f "$CREDENTIALS_FILE" ]; then
+    echo "No credentials found, generating new credentials..."
     POSTGRES_PASSWORD=$(openssl rand -base64 32)
 
     cat <<EOF > "$CREDENTIALS_FILE"
@@ -23,6 +24,8 @@ fi
 POSTGRES_USER=$(awk -F'"' '/POSTGRES_USER/ {print $4}' "$CREDENTIALS_FILE")
 POSTGRES_PASSWORD=$(awk -F'"' '/POSTGRES_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
 POSTGRES_DB=$(awk -F'"' '/POSTGRES_DB/ {print $4}' "$CREDENTIALS_FILE")
+
+echo "Database username: ${POSTGRES_USER}"
 
 export POSTGRES_USER
 export POSTGRES_PASSWORD
