@@ -1,14 +1,21 @@
 x-common-variables: &common-variables
-   PG_CREDENTIALS_FILE: /shared/pg_credentials.json
-   RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
+  environment:
+    # Hostnames used to connect services to each other.
+    # They are taken from the .env file since they are also used in the docker-compose.yaml.
+    DATABASE_HOSTNAME: ${DATABASE_HOSTNAME}
+    RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
+    PROXY_HOSTNAME: ${PROXY_HOSTNAME}
+    MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
+    # Paths of files where credentials are saved.
+    # They are saved in the shared volume so every service can use them.
+    PG_CREDENTIALS_FILE: shared/pg_credentials.json
+    RBBT_CREDENTIALS_FILE: shared/rbbt_credentials.json
 
-# Careful! Service names are sometimes referred in other projects instead of ip addresses, be mindful of that
-# if changing their names.
-# TODO solve this by centralizing the place where containers name are set, if possible
 services:
-  db:
+  database:
     image: postgres:16.4
-    environment: *common-variables
+    <<: *common-variables
+    hostname: ${DATABASE_HOSTNAME}
     volumes:
       - db-data:/var/lib/postgresql/data
       - shared:/shared
@@ -20,7 +27,8 @@ services:
 
   rabbitmq:
     image: rabbitmq:3.13.7
-    environment: *common-variables
+    <<: *common-variables
+    hostname: ${RABBITMQ_HOSTNAME}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq/data
       - shared:/shared
@@ -30,24 +38,26 @@ services:
     command: ["/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh"]
     restart: on-failure
 
-  project-proxy:
+  proxy:
     build: microservices/project-proxy
-    environment: *common-variables
+    <<: *common-variables
+    hostname: ${PROXY_HOSTNAME}
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      - database
     volumes:
       - shared:/shared
     restart: on-failure
 
-  magnetic-reeds-listener:
+  reeds-listener:
     build: microservices/magnetic-reeds-listener
-    environment: *common-variables
+    <<: *common-variables
+    hostname: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
     expose:
       - "8000"
     depends_on:
-      - db
+      - database
     volumes:
       - shared:/shared
     restart: on-failure
