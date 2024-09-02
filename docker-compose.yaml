@@ -12,7 +12,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - shared:/shared
-      - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
+      - ./other-other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
     expose:
       - "5432"
     command: ["/bin/bash", "/usr/bin/database_entrypoint.sh"]
@@ -24,7 +24,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq/data
       - shared:/shared
-      - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
+      - ./other-other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
     expose:
       - "5672"
     command: ["/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh"]
