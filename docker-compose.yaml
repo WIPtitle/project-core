@@ -12,7 +12,9 @@ x-common-variables: &common-variables
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
 
 services:
-  database:
+
+  # RELEASE services with port exposed
+  database-release:
     image: postgres:16.4
     <<: *common-variables
     hostname: ${DATABASE_HOSTNAME}
@@ -20,49 +22,119 @@ services:
       - db-data:/var/lib/postgresql/data
       - shared:/shared
       - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
+    command: [ "/bin/bash", "/usr/bin/database_entrypoint.sh" ]
+    restart: on-failure
     expose:
       - "5432"
-    command: ["/bin/bash", "/usr/bin/database_entrypoint.sh"]
-    restart: on-failure
+    profiles:
+      - release
 
-  rabbitmq:
-    image: rabbitmq:3.13.7
+  rabbitmq-release:
+    image: rabbitmq:3.13.7-management
     <<: *common-variables
     hostname: ${RABBITMQ_HOSTNAME}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq/data
       - shared:/shared
       - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
+    command: [ "/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh" ]
+    restart: on-failure
     expose:
       - "5672"
-    command: ["/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh"]
-    restart: on-failure
+    profiles:
+      - release
 
-  proxy:
+  proxy-release:
     build: microservices/project-proxy
     <<: *common-variables
     hostname: ${PROXY_HOSTNAME}
-    ports:
-      - "8000:8000"
-    depends_on:
-      - database
     volumes:
       - proxy-data:/var/lib/proxy/data
       - shared:/shared
     restart: on-failure
+    depends_on:
+      - database-release
+    ports:
+      - "8000:8000"
+    profiles:
+      - release
 
-  reeds-listener:
+  reeds-listener-release:
     build: microservices/magnetic-reeds-listener
     <<: *common-variables
     hostname: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
-    expose:
-      - "8000"
-    depends_on:
-      - database
     volumes:
       - reeds-listener-data:/var/lib/reeds-listener/data
       - shared:/shared
     restart: on-failure
+    expose:
+      - "8000"
+    depends_on:
+      - database-release
+    profiles:
+      - release
+
+  # DEV services with ports reachable from host
+  database-dev:
+    image: postgres:16.4
+    <<: *common-variables
+    hostname: ${DATABASE_HOSTNAME}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - shared:/shared
+      - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
+    command: [ "/bin/bash", "/usr/bin/database_entrypoint.sh" ]
+    restart: on-failure
+    ports:
+      - "5432:5432"
+    profiles:
+      - dev
+
+  rabbitmq-dev:
+    image: rabbitmq:3.13.7-management
+    <<: *common-variables
+    hostname: ${RABBITMQ_HOSTNAME}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/data
+      - shared:/shared
+      - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
+    command: [ "/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh" ]
+    restart: on-failure
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    profiles:
+      - dev
+
+  proxy-dev:
+    build: microservices/project-proxy
+    <<: *common-variables
+    hostname: ${PROXY_HOSTNAME}
+    volumes:
+      - proxy-data:/var/lib/proxy/data
+      - shared:/shared
+    restart: on-failure
+    depends_on:
+      - database-dev
+    ports:
+      - "8000:8000"
+    profiles:
+      - dev
+
+  reeds-listener-dev:
+    build: microservices/magnetic-reeds-listener
+    <<: *common-variables
+    hostname: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
+    volumes:
+      - reeds-listener-data:/var/lib/reeds-listener/data
+      - shared:/shared
+    restart: on-failure
+    depends_on:
+      - database-dev
+    ports:
+      - "8001:8000"
+    profiles:
+      - dev
 
 volumes:
   db-data:
