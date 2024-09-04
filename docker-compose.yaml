@@ -73,6 +73,7 @@ services:
       - database-release
     profiles:
       - release
+    privileged: true
 
   # DEV services with ports reachable from host
   database-dev:
@@ -135,6 +136,7 @@ services:
       - "8001:8000"
     profiles:
       - dev
+    privileged: true
 
 volumes:
   db-data:
