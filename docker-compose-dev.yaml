@@ -13,7 +13,8 @@ x-common-variables: &common-variables
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
 
 services:
-  database:
+  # DEV services with ports reachable from host
+  database-dev:
     image: postgres:16.4
     <<: *common-variables
     hostname: ${DATABASE_HOSTNAME}
@@ -23,13 +24,13 @@ services:
       - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
     command: [ "/bin/bash", "/usr/bin/database_entrypoint.sh" ]
     restart: on-failure
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     profiles:
       - raspberry
       - not-raspberry
 
-  rabbitmq:
+  rabbitmq-dev:
     image: rabbitmq:3.13.7-management
     <<: *common-variables
     hostname: ${RABBITMQ_HOSTNAME}
@@ -39,13 +40,14 @@ services:
       - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
     command: [ "/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh" ]
     restart: on-failure
-    expose:
-      - "5672"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     profiles:
       - raspberry
       - not-raspberry
 
-  proxy:
+  proxy-dev:
     build: microservices/project-proxy
     <<: *common-variables
     hostname: ${PROXY_HOSTNAME}
@@ -54,14 +56,14 @@ services:
       - shared:/shared
     restart: on-failure
     depends_on:
-      - database
+      - database-dev
     ports:
       - "8000:8000"
     profiles:
       - raspberry
       - not-raspberry
 
-  reeds-listener:
+  reeds-listener-dev:
     build: microservices/magnetic-reeds-listener
     <<: *common-variables
     hostname: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
@@ -69,15 +71,15 @@ services:
       - reeds-listener-data:/var/lib/reeds-listener/data
       - shared:/shared
     restart: on-failure
-    expose:
-      - "8000"
     depends_on:
-      - database
+      - database-dev
+    ports:
+      - "8001:8000"
     profiles:
       - raspberry
     privileged: true
 
-  cameras-listener:
+  cameras-listener-dev:
     build: microservices/rtsp-cameras-listener
     <<: *common-variables
     hostname: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
@@ -85,10 +87,10 @@ services:
       - cameras-listener-data:/var/lib/cameras-listener/data
       - shared:/shared
     restart: on-failure
-    expose:
-      - "8000"
+    ports:
+      - "8002:8000"
     depends_on:
-      - database
+      - database-dev
     profiles:
       - raspberry
       - not-raspberry
