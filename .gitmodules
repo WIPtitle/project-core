@@ -4,3 +4,6 @@
 [submodule "microservices/magnetic-reeds-listener"]
 	path = microservices/magnetic-reeds-listener
 	url = https://github.com/WIPtitle/magnetic-reeds-listener.git
+[submodule "microservices/rtsp-cameras-listener"]
+	path = microservices/rtsp-cameras-listener
+	url = https://github.com/WIPtitle/rtsp-cameras-listener.git

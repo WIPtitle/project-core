@@ -6,13 +6,13 @@ x-common-variables: &common-variables
     RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
     PROXY_HOSTNAME: ${PROXY_HOSTNAME}
     MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
+    RTSP_CAMERAS_LISTENER_HOSTNAME: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
 
 services:
-
   # RELEASE services with port exposed
   database-release:
     image: postgres:16.4
@@ -74,6 +74,21 @@ services:
     profiles:
       - release
     privileged: true
+
+  cameras-listener-release:
+    build: microservices/rtsp-cameras-listener
+    <<: *common-variables
+    hostname: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
+    volumes:
+      - cameras-listener-data:/var/lib/cameras-listener/data
+      - shared:/shared
+    restart: on-failure
+    expose:
+      - "8000"
+    depends_on:
+      - database-release
+    profiles:
+      - release
 
   # DEV services with ports reachable from host
   database-dev:
@@ -137,6 +152,21 @@ services:
     profiles:
       - dev
     privileged: true
+
+  cameras-listener-dev:
+    build: microservices/rtsp-cameras-listener
+    <<: *common-variables
+    hostname: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
+    volumes:
+      - cameras-listener-data:/var/lib/cameras-listener/data
+      - shared:/shared
+    restart: on-failure
+    ports:
+      - "8002:8000"
+    depends_on:
+      - database-dev
+    profiles:
+      - dev
 
 volumes:
   db-data:
