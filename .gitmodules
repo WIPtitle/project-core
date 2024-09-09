@@ -7,3 +7,6 @@
 [submodule "microservices/rtsp-cameras-listener"]
 	path = microservices/rtsp-cameras-listener
 	url = https://github.com/WIPtitle/rtsp-cameras-listener.git
+[submodule "microservices/mail-notifications"]
+	path = microservices/mail-notifications
+	url = https://github.com/WIPtitle/mail-notifications.git

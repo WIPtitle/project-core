@@ -7,6 +7,7 @@ x-common-variables: &common-variables
     PROXY_HOSTNAME: ${PROXY_HOSTNAME}
     MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
     RTSP_CAMERAS_LISTENER_HOSTNAME: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
+    MAIL_NOTIFICATIONS_HOSTNAME: ${MAIL_NOTIFICATIONS_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
@@ -93,6 +94,22 @@ services:
       - raspberry
       - not-raspberry
 
+  mail-notifications:
+    build: microservices/mail-notifications
+    <<: *common-variables
+    hostname: ${MAIL_NOTIFICATIONS_HOSTNAME}
+    volumes:
+      - mail-notifications-data:/var/lib/mail-notifications/data
+      - shared:/shared
+    restart: on-failure
+    expose:
+      - "8000"
+    depends_on:
+      - database
+    profiles:
+      - raspberry
+      - not-raspberry
+
 volumes:
   db-data:
   rabbitmq-data:
@@ -100,3 +117,4 @@ volumes:
   proxy-data:
   reeds-listener-data:
   cameras-listener-data:
+  mail-notifications-data:
