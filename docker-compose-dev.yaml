@@ -113,6 +113,10 @@ services:
     build: microservices/local-audio-manager
     <<: *common-variables
     hostname: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
+    environment:
+      - PULSE_SERVER=tcp:host.docker.internal:4713
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - local-audio-manager-data:/var/lib/local-audio-manager/data
       - shared:/shared
