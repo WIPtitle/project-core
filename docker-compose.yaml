@@ -8,6 +8,7 @@ x-common-variables: &common-variables
     MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
     RTSP_CAMERAS_LISTENER_HOSTNAME: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
     MAIL_NOTIFICATIONS_HOSTNAME: ${MAIL_NOTIFICATIONS_HOSTNAME}
+    LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
@@ -54,8 +55,6 @@ services:
       - proxy-data:/var/lib/proxy/data
       - shared:/shared
     restart: on-failure
-    depends_on:
-      - database
     ports:
       - "8000:8000"
     profiles:
@@ -104,8 +103,20 @@ services:
     restart: on-failure
     expose:
       - "8000"
-    depends_on:
-      - database
+    profiles:
+      - raspberry
+      - not-raspberry
+
+  local-audio-manager:
+    build: microservices/local-audio-manager
+    <<: *common-variables
+    hostname: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
+    volumes:
+      - local-audio-manager-data:/var/lib/local-audio-manager/data
+      - shared:/shared
+    restart: on-failure
+    expose:
+      - "8000"
     profiles:
       - raspberry
       - not-raspberry
@@ -118,3 +129,4 @@ volumes:
   reeds-listener-data:
   cameras-listener-data:
   mail-notifications-data:
+  local-audio-manager-data:

@@ -10,3 +10,6 @@
 [submodule "microservices/mail-notifications"]
 	path = microservices/mail-notifications
 	url = https://github.com/WIPtitle/mail-notifications.git
+[submodule "microservices/local-audio-manager"]
+	path = microservices/local-audio-manager
+	url = https://github.com/WIPtitle/local-audio-manager.git
