@@ -25,9 +25,6 @@ POSTGRES_USER=$(awk -F'"' '/POSTGRES_USER/ {print $4}' "$CREDENTIALS_FILE")
 POSTGRES_PASSWORD=$(awk -F'"' '/POSTGRES_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
 POSTGRES_DB=$(awk -F'"' '/POSTGRES_DB/ {print $4}' "$CREDENTIALS_FILE")
 
-echo "Database username: ${POSTGRES_USER}"
-echo "Database password: ${POSTGRES_USER}"
-
 export POSTGRES_USER
 export POSTGRES_PASSWORD
 export POSTGRES_DB

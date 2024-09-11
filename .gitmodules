@@ -13,3 +13,6 @@
 [submodule "microservices/local-audio-manager"]
 	path = microservices/local-audio-manager
 	url = https://github.com/WIPtitle/local-audio-manager.git
+[submodule "microservices/project-auth"]
+	path = microservices/project-auth
+	url = https://github.com/WIPtitle/project-auth.git

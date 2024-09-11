@@ -13,6 +13,8 @@ x-common-variables: &common-variables
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
+    # The secret key does not need to be shared between services
+    AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
 
 services:
   # DEV services with ports reachable from host
@@ -127,6 +129,20 @@ services:
       - raspberry
       - not-raspberry
 
+  auth-dev:
+    build: microservices/project-auth
+    <<: *common-variables
+    hostname: ${AUTH_HOSTNAME}
+    volumes:
+      - auth-data:/var/lib/auth-data/data
+      - shared:/shared
+    restart: on-failure
+    ports:
+      - "8005:8000"
+    profiles:
+      - raspberry
+      - not-raspberry
+
 volumes:
   db-data:
   rabbitmq-data:
@@ -136,3 +152,4 @@ volumes:
   cameras-listener-data:
   mail-notifications-data:
   local-audio-manager-data:
+  auth-data:
