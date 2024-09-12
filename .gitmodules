@@ -1,12 +1,6 @@
 [submodule "microservices/project-proxy"]
 	path = microservices/project-proxy
 	url = https://github.com/WIPtitle/project-proxy.git
-[submodule "microservices/magnetic-reeds-listener"]
-	path = microservices/magnetic-reeds-listener
-	url = https://github.com/WIPtitle/magnetic-reeds-listener.git
-[submodule "microservices/rtsp-cameras-listener"]
-	path = microservices/rtsp-cameras-listener
-	url = https://github.com/WIPtitle/rtsp-cameras-listener.git
 [submodule "microservices/mail-notifications"]
 	path = microservices/mail-notifications
 	url = https://github.com/WIPtitle/mail-notifications.git
@@ -16,3 +10,6 @@
 [submodule "microservices/project-auth"]
 	path = microservices/project-auth
 	url = https://github.com/WIPtitle/project-auth.git
+[submodule "microservices/devices-manager"]
+	path = microservices/devices-manager
+	url = https://github.com/WIPtitle/devices-manager.git
