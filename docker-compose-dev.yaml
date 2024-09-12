@@ -5,8 +5,7 @@ x-common-variables: &common-variables
     DATABASE_HOSTNAME: ${DATABASE_HOSTNAME}
     RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
     PROXY_HOSTNAME: ${PROXY_HOSTNAME}
-    MAGNETIC_REEDS_LISTENER_HOSTNAME: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
-    RTSP_CAMERAS_LISTENER_HOSTNAME: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
+    DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
     MAIL_NOTIFICATIONS_HOSTNAME: ${MAIL_NOTIFICATIONS_HOSTNAME}
     LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
     # Paths of files where credentials are saved.
@@ -30,9 +29,6 @@ services:
     restart: on-failure
     ports:
       - "5432:5432"
-    profiles:
-      - raspberry
-      - not-raspberry
 
   rabbitmq-dev:
     image: rabbitmq:3.13.7-management
@@ -47,9 +43,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    profiles:
-      - raspberry
-      - not-raspberry
 
   proxy-dev:
     build: microservices/project-proxy
@@ -61,41 +54,20 @@ services:
     restart: on-failure
     ports:
       - "8000:8000"
-    profiles:
-      - raspberry
-      - not-raspberry
 
-  reeds-listener-dev:
-    build: microservices/magnetic-reeds-listener
+  devices-manager-dev:
+    build: microservices/devices-manager
     <<: *common-variables
-    hostname: ${MAGNETIC_REEDS_LISTENER_HOSTNAME}
+    hostname: ${DEVICES_MANAGER_HOSTNAME}
     volumes:
-      - reeds-listener-data:/var/lib/reeds-listener/data
+      - devices-manager-data:/var/lib/devices-manager/data
       - shared:/shared
     restart: on-failure
     depends_on:
       - database-dev
     ports:
       - "8001:8000"
-    profiles:
-      - raspberry
     privileged: true
-
-  cameras-listener-dev:
-    build: microservices/rtsp-cameras-listener
-    <<: *common-variables
-    hostname: ${RTSP_CAMERAS_LISTENER_HOSTNAME}
-    volumes:
-      - cameras-listener-data:/var/lib/cameras-listener/data
-      - shared:/shared
-    restart: on-failure
-    ports:
-      - "8002:8000"
-    depends_on:
-      - database-dev
-    profiles:
-      - raspberry
-      - not-raspberry
 
   mail-notifications-dev:
     build: microservices/mail-notifications
@@ -106,10 +78,7 @@ services:
       - shared:/shared
     restart: on-failure
     ports:
-      - "8003:8000"
-    profiles:
-      - raspberry
-      - not-raspberry
+      - "8002:8000"
 
   local-audio-manager-dev:
     build: microservices/local-audio-manager
@@ -124,10 +93,7 @@ services:
       - shared:/shared
     restart: on-failure
     ports:
-      - "8004:8000"
-    profiles:
-      - raspberry
-      - not-raspberry
+      - "8003:8000"
 
   auth-dev:
     build: microservices/project-auth
@@ -138,18 +104,14 @@ services:
       - shared:/shared
     restart: on-failure
     ports:
-      - "8005:8000"
-    profiles:
-      - raspberry
-      - not-raspberry
+      - "8004:8000"
 
 volumes:
   db-data:
   rabbitmq-data:
   shared:
   proxy-data:
-  reeds-listener-data:
-  cameras-listener-data:
+  devices-manager-data:
   mail-notifications-data:
   local-audio-manager-data:
   auth-data:
