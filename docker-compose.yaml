@@ -14,6 +14,8 @@ x-common-variables: &common-variables
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
+    # Needed for audio
+    PULSE_SERVER: tcp:host.docker.internal:4713
 
 services:
   database:
@@ -53,7 +55,7 @@ services:
     ports:
       - "8000:8000"
 
-  devices-manager-dev:
+  devices-manager:
     build: microservices/devices-manager
     <<: *common-variables
     hostname: ${DEVICES_MANAGER_HOSTNAME}
@@ -62,7 +64,8 @@ services:
       - shared:/shared
     restart: on-failure
     depends_on:
-      - database-dev
+      - database
+      - rabbitmq
     expose:
       - "8000"
     privileged: true
@@ -75,6 +78,8 @@ services:
       - mail-notifications-data:/var/lib/mail-notifications/data
       - shared:/shared
     restart: on-failure
+    depends_on:
+      - rabbitmq
     expose:
       - "8000"
 
@@ -82,14 +87,14 @@ services:
     build: microservices/local-audio-manager
     <<: *common-variables
     hostname: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
-    environment:
-      - PULSE_SERVER=tcp:host.docker.internal:4713
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - local-audio-manager-data:/var/lib/local-audio-manager/data
       - shared:/shared
     restart: on-failure
+    depends_on:
+      - rabbitmq
     expose:
       - "8000"
 
