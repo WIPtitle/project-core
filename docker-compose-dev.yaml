@@ -16,7 +16,7 @@ x-common-variables: &common-variables
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
     # Needed for audio
-    PULSE_SERVER: tcp:host.docker.internal:4713
+    PULSE_SERVER: "tcp:host.docker.internal:4713"
 
 services:
   # DEV services with ports reachable from host
