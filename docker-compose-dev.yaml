@@ -8,6 +8,7 @@ x-common-variables: &common-variables
     DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
     MAIL_NOTIFICATIONS_HOSTNAME: ${MAIL_NOTIFICATIONS_HOSTNAME}
     LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
+    AUTH_HOSTNAME: ${AUTH_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
