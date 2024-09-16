@@ -13,3 +13,6 @@
 [submodule "microservices/devices-manager"]
 	path = microservices/devices-manager
 	url = https://github.com/WIPtitle/devices-manager.git
+[submodule "microservices/project-frontend"]
+	path = microservices/project-frontend
+	url = https://github.com/WIPtitle/project-frontend.git

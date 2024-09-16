@@ -112,6 +112,21 @@ services:
     ports:
       - "8004:8000"
 
+  frontend-dev:
+    build: microservices/project-frontend
+    <<: *common-variables
+    ports:
+      - "80:80"
+    restart: on-failure
+    depends_on:
+      - database-dev
+      - rabbitmq-dev
+      - devices-manager-dev
+      - local-audio-manager-dev
+      - auth-dev
+      - mail-notifications-dev
+      - proxy-dev
+
 volumes:
   db-data:
   rabbitmq-data:
