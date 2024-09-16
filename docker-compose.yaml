@@ -133,3 +133,4 @@ volumes:
   devices-manager-data:
   mail-notifications-data:
   local-audio-manager-data:
+  auth-data:
