@@ -6,9 +6,10 @@ x-common-variables: &common-variables
     RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
     PROXY_HOSTNAME: ${PROXY_HOSTNAME}
     DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
-    MAIL_NOTIFICATIONS_HOSTNAME: ${MAIL_NOTIFICATIONS_HOSTNAME}
+    NOTIFICATIONS_MANAGER_HOSTNAME: ${NOTIFICATIONS_MANAGER_HOSTNAME}
     LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
     AUTH_HOSTNAME: ${AUTH_HOSTNAME}
+    NTFY_HOSTNAME: ${NTFY_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
@@ -71,12 +72,12 @@ services:
       - "8001:8000"
     privileged: true
 
-  mail-notifications-dev:
+  notifications-manager-dev:
     build: microservices/mail-notifications
     <<: *common-variables
-    hostname: ${MAIL_NOTIFICATIONS_HOSTNAME}
+    hostname: ${NOTIFICATIONS_MANAGER_HOSTNAME}
     volumes:
-      - mail-notifications-data:/var/lib/mail-notifications/data
+      - notifications-manager-data:/var/lib/notifications-manager/data
       - shared:/shared
     restart: on-failure
     depends_on:
@@ -122,8 +123,23 @@ services:
       - devices-manager-dev
       - local-audio-manager-dev
       - auth-dev
-      - mail-notifications-dev
+      - notifications-manager-dev
       - proxy-dev
+
+  ntfy:
+    image: binwiederhier/ntfy:v2.11.0
+    hostname: ${NTFY_HOSTNAME}
+    command:
+      - serve
+    restart:
+      on-failure
+    ports:
+      - "8080:80"
+    volumes:
+      - /var/cache/ntfy:/var/cache/ntfy
+      - /etc/ntfy:/etc/ntfy
+      - ntfy-data:/var/lib/ntfy/data
+      - shared:/shared
 
 volumes:
   db-data:
@@ -131,6 +147,7 @@ volumes:
   shared:
   proxy-data:
   devices-manager-data:
-  mail-notifications-data:
+  notifications-manager-data:
   local-audio-manager-data:
   auth-data:
+  ntfy-data:
