@@ -73,7 +73,7 @@ services:
     privileged: true
 
   notifications-manager-dev:
-    build: microservices/mail-notifications
+    build: microservices/notifications-manager
     <<: *common-variables
     hostname: ${NOTIFICATIONS_MANAGER_HOSTNAME}
     volumes:

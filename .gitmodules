@@ -1,9 +1,9 @@
 [submodule "microservices/project-proxy"]
 	path = microservices/project-proxy
 	url = https://github.com/WIPtitle/project-proxy.git
-[submodule "microservices/mail-notifications"]
-	path = microservices/mail-notifications
-	url = https://github.com/WIPtitle/mail-notifications.git
+[submodule "microservices/notifications-manager"]
+	path = microservices/notifications-manager
+	url = https://github.com/WIPtitle/notifications-manager.git
 [submodule "microservices/local-audio-manager"]
 	path = microservices/local-audio-manager
 	url = https://github.com/WIPtitle/local-audio-manager.git
