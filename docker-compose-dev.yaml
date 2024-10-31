@@ -131,6 +131,10 @@ services:
     hostname: ${NTFY_HOSTNAME}
     command:
       - serve
+    environment:
+      - NTFY_BASE_URL=http://localhost:8080 #TODO this should be changed with a reachable url
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+      - NTFY_ATTACHMENT_EXPIRY_DURATION=336h
     restart:
       on-failure
     ports:
