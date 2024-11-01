@@ -14,6 +14,7 @@ x-common-variables: &common-variables
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
+    NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
 
@@ -126,22 +127,17 @@ services:
 
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
+    <<: *common-variables
     hostname: ${NTFY_HOSTNAME}
-    command:
-      - serve
-    environment:
-      - NTFY_BASE_URL=http://localhost:8080 #TODO this should be changed with a reachable url
-      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
-      - NTFY_ATTACHMENT_EXPIRY_DURATION=336h
-    restart:
-      on-failure
-    ports:
-      - "8080:80"
     volumes:
-      - /var/cache/ntfy:/var/cache/ntfy
-      - /etc/ntfy:/etc/ntfy
+      - /var/lib/ntfy:/var/lib/ntfy
       - ntfy-data:/var/lib/ntfy/data
       - shared:/shared
+      - ./other-entrypoints/ntfy_entrypoint.sh:/usr/bin/ntfy_entrypoint.sh
+    entrypoint: [ "/bin/ash", "/usr/bin/ntfy_entrypoint.sh" ]
+    restart: on-failure
+    ports:
+      - "8080:80"
 
 volumes:
   db-data:
