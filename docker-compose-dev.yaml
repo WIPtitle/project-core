@@ -11,13 +11,11 @@ x-common-variables: &common-variables
     AUTH_HOSTNAME: ${AUTH_HOSTNAME}
     FRONTEND_HOSTNAME: ${FRONTEND_HOSTNAME}
     NTFY_HOSTNAME: ${NTFY_HOSTNAME}
-    LOCALTUNNEL_HOSTNAME: ${LOCALTUNNEL_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
     NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
-    LT_CREDENTIALS_FILE: /shared/lt_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
 
@@ -61,18 +59,6 @@ services:
     ports:
       - "8000:8000"
 
-  localtunnel-dev:
-    image: node:16
-    <<: *common-variables
-    network_mode: host
-    hostname: ${LOCALTUNNEL_HOSTNAME}
-    volumes:
-      - localtunnel-data:/var/lib/localtunnel/data
-      - shared:/shared
-      - ./other-entrypoints/localtunnel_entrypoint.sh:/usr/bin/localtunnel_entrypoint.sh
-    entrypoint: [ "/bin/bash", "/usr/bin/localtunnel_entrypoint.sh" ]
-    restart: on-failure
-
   devices-manager-dev:
     build: microservices/devices-manager
     <<: *common-variables
@@ -84,7 +70,6 @@ services:
     depends_on:
       - database-dev
       - rabbitmq-dev
-      - localtunnel-dev
     ports:
       - "8001:8000"
     privileged: true
@@ -99,7 +84,6 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq-dev
-      - localtunnel-dev
     ports:
       - "8002:8000"
 
@@ -113,7 +97,6 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq-dev
-      - localtunnel-dev
     ports:
       - "8003:8000"
     devices:
@@ -130,7 +113,6 @@ services:
     depends_on:
       - database-dev
       - rabbitmq-dev
-      - localtunnel-dev
     ports:
       - "8004:8000"
 
@@ -151,7 +133,6 @@ services:
       - auth-dev
       - notifications-manager-dev
       - proxy-dev
-      - localtunnel-dev
 
   ntfy-dev:
     image: binwiederhier/ntfy:v2.11.0
@@ -164,8 +145,6 @@ services:
       - ./other-entrypoints/ntfy_entrypoint.sh:/usr/bin/ntfy_entrypoint.sh
     entrypoint: [ "/bin/ash", "/usr/bin/ntfy_entrypoint.sh" ]
     restart: on-failure
-    depends_on:
-      - localtunnel-dev
     ports:
       - "8080:80"
 
@@ -179,4 +158,3 @@ volumes:
   local-audio-manager-data:
   auth-data:
   ntfy-data:
-  localtunnel-data:

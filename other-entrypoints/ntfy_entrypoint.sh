@@ -32,10 +32,7 @@ EOF
   NTFY_READER_USER=$(awk -F'"' '/NTFY_READER_USER/ {print $4}' "$CREDENTIALS_FILE")
   NTFY_READER_PASSWORD=$(awk -F'"' '/NTFY_READER_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
 
-  LT_CREDENTIALS_FILE=${LT_CREDENTIALS_FILE}
-  NTFY_BASE_URL=$(awk -F'"' '/URL_NTFY/ {print $4}' "$LT_CREDENTIALS_FILE")
-
-  export NTFY_BASE_URL=$NTFY_BASE_URL
+  export NTFY_BASE_URL="http://localhost:8080"
   export NTFY_CACHE_FILE=/var/lib/ntfy/cache.db
   export NTFY_CACHE_DURATION=336h
   export NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
@@ -45,8 +42,7 @@ EOF
   export NTFY_ATTACHMENT_EXPIRY_DURATION=336h
   export NTFY_ENABLE_LOGIN=true
   export NTFY_POLL_INTERVAL=30
-  export NTFY_CORS_ENABLED=true
-  export NTFY_CORS_ORIGINS=*
+  export NTFY_CORS_ALLOW_ORIGIN="*"
 
   [ ! -f "$NTFY_CACHE_FILE" ] && touch "$NTFY_CACHE_FILE"
   [ ! -f "$NTFY_AUTH_FILE" ] && touch "$NTFY_AUTH_FILE"

@@ -11,7 +11,6 @@ x-common-variables: &common-variables
     FRONTEND_HOSTNAME: ${FRONTEND_HOSTNAME}
     AUTH_HOSTNAME: ${AUTH_HOSTNAME}
     NTFY_HOSTNAME: ${NTFY_HOSTNAME}
-    LOCALTUNNEL_HOSTNAME: ${LOCALTUNNEL_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
@@ -58,18 +57,6 @@ services:
     ports:
       - "8000:8000"
 
-  localtunnel:
-    image: node:16
-    <<: *common-variables
-    network_mode: host
-    hostname: ${LOCALTUNNEL_HOSTNAME}
-    volumes:
-      - localtunnel-data:/var/lib/localtunnel/data
-      - shared:/shared
-      - ./other-entrypoints/localtunnel_entrypoint.sh:/usr/bin/localtunnel_entrypoint.sh
-    entrypoint: [ "/bin/bash", "/usr/bin/localtunnel_entrypoint.sh" ]
-    restart: on-failure
-
   devices-manager:
     build: microservices/devices-manager
     <<: *common-variables
@@ -81,7 +68,6 @@ services:
     depends_on:
       - database
       - rabbitmq
-      - localtunnel
     expose:
       - "8000"
     privileged: true
@@ -96,7 +82,6 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq
-      - localtunnel
     expose:
       - "8000"
 
@@ -110,7 +95,6 @@ services:
     restart: on-failure
     depends_on:
       - rabbitmq
-      - localtunnel
     expose:
       - "8000"
     devices:
@@ -127,7 +111,6 @@ services:
     depends_on:
       - database-dev
       - rabbitmq-dev
-      - localtunnel-dev
     expose:
       - "8000"
 
@@ -148,7 +131,6 @@ services:
       - auth
       - notifications-manager
       - proxy
-      - localtunnel
 
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
@@ -161,8 +143,6 @@ services:
       - ./other-entrypoints/ntfy_entrypoint.sh:/usr/bin/ntfy_entrypoint.sh
     entrypoint: [ "/bin/ash", "/usr/bin/ntfy_entrypoint.sh" ]
     restart: on-failure
-    depends_on:
-      - localtunnel
     ports:
       - "8080:80"
 
@@ -176,4 +156,3 @@ volumes:
   local-audio-manager-data:
   auth-data:
   ntfy-data:
-  localtunnel-data:
