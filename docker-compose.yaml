@@ -109,8 +109,8 @@ services:
       - shared:/shared
     restart: on-failure
     depends_on:
-      - database-dev
-      - rabbitmq-dev
+      - database
+      - rabbitmq
     expose:
       - "8000"
 
