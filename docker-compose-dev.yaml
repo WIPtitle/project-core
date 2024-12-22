@@ -30,7 +30,7 @@ services:
       - shared:/shared
       - ./other-entrypoints/database_entrypoint.sh:/usr/bin/database_entrypoint.sh
     command: [ "/bin/bash", "/usr/bin/database_entrypoint.sh" ]
-    restart: on-failure
+    restart: no
     ports:
       - "5432:5432"
 
@@ -43,7 +43,7 @@ services:
       - shared:/shared
       - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
     command: [ "/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh" ]
-    restart: on-failure
+    restart: no
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -55,7 +55,7 @@ services:
     volumes:
       - proxy-data:/var/lib/proxy/data
       - shared:/shared
-    restart: on-failure
+    restart: no
     ports:
       - "8000:8000"
 
@@ -66,7 +66,7 @@ services:
     volumes:
       - devices-manager-data:/var/lib/devices-manager/data
       - shared:/shared
-    restart: on-failure
+    restart: no
     depends_on:
       - database-dev
       - rabbitmq-dev
@@ -81,7 +81,7 @@ services:
     volumes:
       - notifications-manager-data:/var/lib/notifications-manager/data
       - shared:/shared
-    restart: on-failure
+    restart: no
     depends_on:
       - rabbitmq-dev
     ports:
@@ -94,7 +94,7 @@ services:
     volumes:
       - local-audio-manager-data:/var/lib/local-audio-manager/data
       - shared:/shared
-    restart: on-failure
+    restart: no
     depends_on:
       - rabbitmq-dev
     ports:
@@ -109,7 +109,7 @@ services:
     volumes:
       - auth-data:/var/lib/auth-data/data
       - shared:/shared
-    restart: on-failure
+    restart: no
     depends_on:
       - database-dev
       - rabbitmq-dev
@@ -124,7 +124,7 @@ services:
       - shared:/shared
     ports:
       - "80:3000"
-    restart: on-failure
+    restart: no
     depends_on:
       - database-dev
       - rabbitmq-dev
@@ -144,7 +144,7 @@ services:
       - shared:/shared
       - ./other-entrypoints/ntfy_entrypoint.sh:/usr/bin/ntfy_entrypoint.sh
     entrypoint: [ "/bin/ash", "/usr/bin/ntfy_entrypoint.sh" ]
-    restart: on-failure
+    restart: no
     ports:
       - "8080:80"
 
