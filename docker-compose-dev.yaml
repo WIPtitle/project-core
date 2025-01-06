@@ -101,6 +101,7 @@ services:
       - "8003:8000"
     devices:
       - /dev/snd:/dev/snd
+    privileged: true
 
   auth-dev:
     build: microservices/project-auth
