@@ -1,6 +1,7 @@
 #!/bin/ash
 
 apk add openssl
+apk add curl
 
 check_and_create_credentials() {
   CREDENTIALS_FILE=${NTFY_CREDENTIALS_FILE}
@@ -39,6 +40,8 @@ EOF
   else
     export NTFY_BASE_URL="http://localhost:8080"
   fi
+
+  echo $NTFY_BASE_URL
 
   export NTFY_CACHE_FILE=/var/lib/ntfy/cache.db
   export NTFY_CACHE_DURATION=336h
