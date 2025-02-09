@@ -73,6 +73,7 @@ services:
     ports:
       - "8001:8000"
     privileged: true
+    mem_limit: 1024m # Limit the memory usage to 1GB
 
   notifications-manager-dev:
     build: microservices/notifications-manager

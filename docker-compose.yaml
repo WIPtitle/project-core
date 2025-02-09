@@ -71,6 +71,7 @@ services:
     expose:
       - "8000"
     privileged: true
+    mem_limit: 1024m # Limit the memory usage to 1GB
 
   notifications-manager:
     build: microservices/notifications-manager
