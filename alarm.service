@@ -6,7 +6,7 @@ After=network.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/home/pi/project-core
-ExecStart=/usr/bin/docker compose -f /home/pi/project-core/docker-compose.yaml up -d
+ExecStart=/usr/bin/docker compose -f /home/pi/project-core/docker-compose.yaml up -d --build
 ExecStop=/usr/bin/docker compose -f /home/pi/project-core/docker-compose.yaml down
 TimeoutStartSec=0
 
