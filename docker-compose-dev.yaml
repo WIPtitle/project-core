@@ -18,6 +18,7 @@ x-common-variables: &common-variables
     NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
+    GPIO_MONITOR_URL: ${GPIO_MONITOR_URL}
 
 services:
   # DEV services with ports reachable from host
@@ -72,8 +73,6 @@ services:
       - rabbitmq-dev
     ports:
       - "8001:8000"
-    privileged: true
-    mem_limit: 1024m # Limit the memory usage to 1GB
 
   notifications-manager-dev:
     build: microservices/notifications-manager
