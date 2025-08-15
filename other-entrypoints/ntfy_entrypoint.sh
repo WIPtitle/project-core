@@ -33,16 +33,9 @@ EOF
   NTFY_READER_USER=$(awk -F'"' '/NTFY_READER_USER/ {print $4}' "$CREDENTIALS_FILE")
   NTFY_READER_PASSWORD=$(awk -F'"' '/NTFY_READER_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
 
-  PUBLIC_IP=$(curl -s http://ipinfo.io/ip)
-
-  if ping -c 1 $PUBLIC_IP &> /dev/null; then
-    export NTFY_BASE_URL="http://$PUBLIC_IP:8080"
-  else
-    export NTFY_BASE_URL="http://localhost:8080"
-  fi
-
-  echo $NTFY_BASE_URL
-
+  NTFY_BASE_URL="${PUBLIC_HOST_URL}"
+  export NTFY_BASE_URL="$NTFY_BASE_URL"
+  echo "Using NTFY_BASE_URL from PUBLIC_HOST_URL: $NTFY_BASE_URL"
   export NTFY_CACHE_FILE=/var/lib/ntfy/cache.db
   export NTFY_CACHE_DURATION=336h
   export NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
