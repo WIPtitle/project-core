@@ -21,6 +21,7 @@ x-common-variables: &common-variables
     # URLs that could be custom
     PUBLIC_HOST_URL: ${PUBLIC_HOST_URL}
     GPIO_MONITOR_URL: ${GPIO_MONITOR_URL}
+    MP3_PLAYER_SERVER_URL: ${MP3_PLAYER_SERVER_URL}
 
 services:
   database:
@@ -73,6 +74,8 @@ services:
       - rabbitmq
     expose:
       - "8000"
+    extra_hosts:
+      - "localhost:host-gateway"
 
   notifications-manager:
     build: microservices/notifications-manager
@@ -99,9 +102,8 @@ services:
       - rabbitmq
     expose:
       - "8000"
-    devices:
-      - /dev/snd:/dev/snd
-    privileged: true
+    extra_hosts:
+      - "localhost:host-gateway"
 
   auth:
     build: microservices/project-auth
