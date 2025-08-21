@@ -1,14 +1,18 @@
 [Unit]
 Description=Docker Compose Application Service
-After=network.target
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-WorkingDirectory=/home/pi/project-core
-ExecStart=/usr/bin/docker compose -f /home/pi/project-core/docker-compose.yaml up
-ExecStop=/usr/bin/docker compose -f /home/pi/project-core/docker-compose.yaml down
-TimeoutStartSec=0
+WorkingDirectory=/opt/project-core
+ExecStartPre=/bin/bash -c 'until docker info; do echo "Waiting for Docker..."; sleep 2; done'
+ExecStart=/usr/bin/docker compose -f /opt/project-core/docker-compose.yaml up -d
+ExecStop=/usr/bin/docker compose -f /opt/project-core/docker-compose.yaml down
+TimeoutStartSec=300
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
