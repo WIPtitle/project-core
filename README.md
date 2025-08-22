@@ -40,7 +40,7 @@ Clone the project on your desired server and run it using Docker.
 ```bash
 git clone --recurse-submodules https://github.com/WIPtitle/project-core.git
 cd project-core
-docker compose up
+docker compose up -d
 ```
 It will probably take some time to build and run every container.
 
