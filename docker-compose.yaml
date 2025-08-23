@@ -86,6 +86,8 @@ services:
       - shared:/shared
     restart: unless-stopped
     depends_on:
+      - ntfy
+      - database
       - rabbitmq
     expose:
       - "8000"
