@@ -57,7 +57,7 @@ On the Configuration section you can also see the credentials necessary to subsc
 
 Create your desired devices on the Devices section: both Sensors and RTSP Cameras have a health check so if creation fails verify that they are reachable.
 
-Create your desired device groups, with both Sensors and Cameras: Cameras will start recording when alarm is triggered on the device group they are included in.
+Create your desired device groups with your specified sensors: Cameras that are not always recording will start recording when alarm is triggered.
 
 Activate and deactivate the alarm for your device groups using your PIN, and try to trigger the sensors when alarm is active to verify both audio and notifications.
 
