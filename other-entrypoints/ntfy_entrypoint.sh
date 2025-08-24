@@ -47,7 +47,7 @@ EOF
   export NTFY_POLL_INTERVAL=30
   export NTFY_CORS_ALLOW_ORIGIN="*"
 
-  export NTFY_ENABLE_WEB=false
+  export NTFY_ENABLE_WEB=true
 
   [ ! -f "$NTFY_CACHE_FILE" ] && touch "$NTFY_CACHE_FILE"
   [ ! -f "$NTFY_AUTH_FILE" ] && touch "$NTFY_AUTH_FILE"
