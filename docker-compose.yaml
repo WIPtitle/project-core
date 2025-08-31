@@ -20,8 +20,8 @@ x-common-variables: &common-variables
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
     # URLs that could be custom
     PUBLIC_HOST_URL: ${PUBLIC_HOST_URL}
-    GPIO_MONITOR_URL: ${GPIO_MONITOR_URL}
-    MP3_PLAYER_SERVER_URL: ${MP3_PLAYER_SERVER_URL}
+    GPIO_MONITOR_URLS: ${GPIO_MONITOR_URLS}
+    MP3_PLAYER_SERVER_URLS: ${MP3_PLAYER_SERVER_URLS}
 
 services:
   database:

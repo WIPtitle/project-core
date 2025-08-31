@@ -33,8 +33,8 @@ As a small note: since gpio-monitor is an external service, you can also write y
 ## Installation
 
 Make sure to create an .env file (use the .env.example file as base):
-Update GPIO_MONITOR_URL and MP3_PLAYER_SERVER_URL if needed, and update PUBLIC_HOST_URL with your public
-IP or hostname if you want to access the notifications over the internet.
+Update GPIO_MONITOR_URLS and MP3_PLAYER_SERVER_URLS if needed (separate URLs with a single comma if more than one), and update PUBLIC_HOST_URL with your public
+IP or hostname if you want to access the notifications via Ntfy over the internet.
 
 Clone the project on your desired server and run it using Docker.
 ```bash
