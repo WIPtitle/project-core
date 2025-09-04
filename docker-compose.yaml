@@ -4,7 +4,6 @@ x-common-variables: &common-variables
     # They are taken from the .env file since they are also used in the docker-compose.yaml.
     DATABASE_HOSTNAME: ${DATABASE_HOSTNAME}
     RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
-    PROXY_HOSTNAME: ${PROXY_HOSTNAME}
     DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
     NOTIFICATIONS_MANAGER_HOSTNAME: ${NOTIFICATIONS_MANAGER_HOSTNAME}
     LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
@@ -49,17 +48,6 @@ services:
     restart: unless-stopped
     expose:
       - "5672"
-
-  proxy:
-    build: microservices/project-proxy
-    <<: *common-variables
-    hostname: ${PROXY_HOSTNAME}
-    volumes:
-      - proxy-data:/var/lib/proxy/data
-      - shared:/shared
-    restart: unless-stopped
-    expose:
-      - "8000"
 
   devices-manager:
     build: microservices/devices-manager
@@ -137,7 +125,6 @@ services:
       - local-audio-manager
       - auth
       - notifications-manager
-      - proxy
 
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
@@ -165,14 +152,12 @@ services:
       - nginx-ssl:/etc/nginx/ssl
     depends_on:
       - frontend
-      - proxy
     restart: unless-stopped
 
 volumes:
   db-data:
   rabbitmq-data:
   shared:
-  proxy-data:
   devices-manager-data:
   notifications-manager-data:
   local-audio-manager-data:
