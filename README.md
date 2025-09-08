@@ -19,7 +19,7 @@ This project uses [mp3-player-server](https://github.com/WIPtitle/mp3-player-ser
 You can install all of this on a Raspberry, thought it is not recommended.
 
 If you install them on separate servers you must update the .env file before running the alarm system,
-specifically you have to set GPIO_MONITOR_URL and MP3_PLAYER_SERVER_URL (for example, MP3_PLAYER_SERVER_URL=http://192.168.1.150:8888).
+specifically you have to set GPIO_MONITOR_URLS and MP3_PLAYER_SERVER_URLS (for example, MP3_PLAYER_SERVER_URLS=http://192.168.1.150:8888).
 
 Both gpio-monitor and mp3-player-server should be running and reachable when starting the alarm service.
 They should also already be configured: gpio-monitor should already be listening to your desired pins (outputting HIGH when you want a triggered alarm and LOW for idle);
@@ -35,6 +35,9 @@ As a small note: since gpio-monitor is an external service, you can also write y
 Make sure to create an .env file (use the .env.example file as base):
 Update GPIO_MONITOR_URLS and MP3_PLAYER_SERVER_URLS if needed (separate URLs with a single comma if more than one), and update PUBLIC_HOST_URL with your public
 IP or hostname if you want to access the notifications via Ntfy over the internet.
+
+Note that you can specify what sound you want from each server like this (if not set, BOTH is the default):
+`MP3_PLAYER_SERVER_URLS=ALARM@http://localhost:8888,WAITING@http://192.168.1.1:8888,BOTH@http://127.0.0.1:9999`
 
 Clone the project on your desired server and run it using Docker.
 ```bash
