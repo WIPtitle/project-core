@@ -10,6 +10,7 @@ x-common-variables: &common-variables
     FRONTEND_HOSTNAME: ${FRONTEND_HOSTNAME}
     AUTH_HOSTNAME: ${AUTH_HOSTNAME}
     NTFY_HOSTNAME: ${NTFY_HOSTNAME}
+    HEALTH_CHECKER_HOSTNAME: ${HEALTH_CHECKER_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
@@ -159,6 +160,21 @@ services:
     restart: unless-stopped
     expose:
       - "80"
+
+  health-checker:
+    image: alpine:3.19
+    <<: *common-variables
+    hostname: ${HEALTH_CHECKER_HOSTNAME}
+    volumes:
+      - ./other-entrypoints/health_checker_entrypoint.sh:/health_checker_entrypoint.sh:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    command: [ "/bin/sh", "-c", "apk add --no-cache bash curl && bash /health_checker_entrypoint.sh" ]
+    restart: unless-stopped
+    expose:
+      - "8000"
+    extra_hosts:
+      - "localhost:host-gateway"
 
   nginx:
     image: nginx:1.28.0-alpine
