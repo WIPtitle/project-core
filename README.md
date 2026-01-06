@@ -47,6 +47,9 @@ docker compose up -d
 ```
 It will probably take some time to build and run every container.
 
+Note: The repository also includes `mp3-player-server` and `gpio-monitor` as submodules for development convenience.
+These are **not used** by the main project and must be installed separately on their target servers (typically a Raspberry Pi).
+
 ## Usage
 
 When every container is up and running, you can access the web interface on 

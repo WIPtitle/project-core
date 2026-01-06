@@ -16,3 +16,9 @@
 [submodule "microservices/project-frontend"]
 	path = microservices/project-frontend
 	url = https://github.com/WIPtitle/project-frontend.git
+[submodule "microservices/mp3-player-server"]
+	path = microservices/mp3-player-server
+	url = https://github.com/WIPtitle/mp3-player-server.git
+[submodule "microservices/gpio-monitor"]
+	path = microservices/gpio-monitor
+	url = https://github.com/WIPtitle/gpio-monitor.git
