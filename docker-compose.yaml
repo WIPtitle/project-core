@@ -3,7 +3,6 @@ x-common-variables: &common-variables
     # Hostnames used to connect services to each other.
     # They are taken from the .env file since they are also used in the docker-compose.yaml.
     DATABASE_HOSTNAME: ${DATABASE_HOSTNAME}
-    RABBITMQ_HOSTNAME: ${RABBITMQ_HOSTNAME}
     DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
     NOTIFICATIONS_MANAGER_HOSTNAME: ${NOTIFICATIONS_MANAGER_HOSTNAME}
     LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
@@ -14,7 +13,6 @@ x-common-variables: &common-variables
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
-    RBBT_CREDENTIALS_FILE: /shared/rbbt_credentials.json
     NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
@@ -43,21 +41,6 @@ services:
     expose:
       - "5432"
 
-  rabbitmq:
-    image: rabbitmq:3.13.7-management
-    <<: *common-variables
-    hostname: ${RABBITMQ_HOSTNAME}
-    volumes:
-      - rabbitmq-data:/var/lib/rabbitmq/data
-      - shared:/shared
-      - ./other-entrypoints/rabbitmq_entrypoint.sh:/usr/bin/rabbitmq_entrypoint.sh
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/timezone:ro
-    command: [ "/bin/bash", "/usr/bin/rabbitmq_entrypoint.sh" ]
-    restart: unless-stopped
-    expose:
-      - "5672"
-
   devices-manager:
     build: microservices/devices-manager
     <<: *common-variables
@@ -70,7 +53,8 @@ services:
     restart: unless-stopped
     depends_on:
       - database
-      - rabbitmq
+      - local-audio-manager
+      - notifications-manager
     expose:
       - "8000"
     extra_hosts:
@@ -89,7 +73,6 @@ services:
     depends_on:
       - ntfy
       - database
-      - rabbitmq
     expose:
       - "8000"
 
@@ -103,8 +86,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
-    depends_on:
-      - rabbitmq
     expose:
       - "8000"
     extra_hosts:
@@ -122,7 +103,6 @@ services:
     restart: unless-stopped
     depends_on:
       - database
-      - rabbitmq
     expose:
       - "8000"
 
@@ -139,7 +119,6 @@ services:
     restart: unless-stopped
     depends_on:
       - database
-      - rabbitmq
       - devices-manager
       - local-audio-manager
       - auth
@@ -194,7 +173,6 @@ services:
 
 volumes:
   db-data:
-  rabbitmq-data:
   shared:
   devices-manager-data:
   notifications-manager-data:
