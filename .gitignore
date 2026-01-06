@@ -1,1 +1,11 @@
 /.idea
+.env
+
+# Dev environment
+/config/
+/dev-data/
+/logs/
+*.pid
+.gpio-monitor.pid
+.mp3-player-server.pid
+.env.backup

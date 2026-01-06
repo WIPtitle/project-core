@@ -74,7 +74,7 @@ services:
     expose:
       - "8000"
     extra_hosts:
-      - "localhost:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   notifications-manager:
     build: microservices/notifications-manager
@@ -108,7 +108,7 @@ services:
     expose:
       - "8000"
     extra_hosts:
-      - "localhost:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   auth:
     build: microservices/project-auth
@@ -174,7 +174,7 @@ services:
     expose:
       - "8000"
     extra_hosts:
-      - "localhost:host-gateway"
+      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:1.28.0-alpine
