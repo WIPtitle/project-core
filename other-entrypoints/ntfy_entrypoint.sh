@@ -39,8 +39,6 @@ EOF
   export NTFY_AUTH_FILE=/var/lib/ntfy/auth.db
   export NTFY_AUTH_DEFAULT_ACCESS=deny-all
   export NTFY_BEHIND_PROXY=true
-  export NTFY_ATTACHMENT_CACHE_DIR=/var/lib/ntfy/attachments
-  export NTFY_ATTACHMENT_EXPIRY_DURATION=336h
   export NTFY_ENABLE_LOGIN=true
   export NTFY_POLL_INTERVAL=30
   export NTFY_CORS_ALLOW_ORIGIN="*"
