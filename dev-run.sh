@@ -114,13 +114,6 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Check .env exists
-if [ ! -f "$SCRIPT_DIR/.env" ]; then
-    echo -e "${RED}Error: .env file not found${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Using .env configuration${NC}"
 
 # Start GPIO Monitor
 echo -e "\n${GREEN}Starting GPIO Monitor...${NC}"

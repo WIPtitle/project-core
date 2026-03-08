@@ -33,9 +33,7 @@ EOF
   NTFY_READER_USER=$(awk -F'"' '/NTFY_READER_USER/ {print $4}' "$CREDENTIALS_FILE")
   NTFY_READER_PASSWORD=$(awk -F'"' '/NTFY_READER_PASSWORD/ {print $4}' "$CREDENTIALS_FILE")
 
-  NTFY_BASE_URL="${PUBLIC_HOST_URL}"
-  export NTFY_BASE_URL="$NTFY_BASE_URL"
-  echo "Using NTFY_BASE_URL from PUBLIC_HOST_URL: $NTFY_BASE_URL"
+  # No base URL needed — ntfy deduces it from the Host header via the reverse proxy
   export NTFY_CACHE_FILE=/var/lib/ntfy/cache.db
   export NTFY_CACHE_DURATION=336h
   export NTFY_AUTH_FILE=/var/lib/ntfy/auth.db

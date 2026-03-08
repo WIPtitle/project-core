@@ -14,29 +14,24 @@ KEY_FILE="$CERT_DIR/self-signed.key"
 
 mkdir -p $CERT_DIR
 
-# Extract hostname from PUBLIC_HOST_URL
-if [ -n "$PUBLIC_HOST_URL" ]; then
-    HOST_ONLY=$(echo "$PUBLIC_HOST_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||' -e 's|:.*$||')
-else
-    HOST_ONLY="localhost"
-fi
-
-echo "Host: $HOST_ONLY"
-
 # Generate certificates if they don't exist
 if [ ! -f "$CERT_FILE" ] || [ ! -f "$KEY_FILE" ]; then
     echo "Generating new SSL certificates..."
 
-    if echo "$HOST_ONLY" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'; then
-        SAN="IP:$HOST_ONLY,DNS:localhost"
-    else
-        SAN="DNS:$HOST_ONLY,DNS:*.$HOST_ONLY,DNS:localhost,IP:127.0.0.1"
+    # Auto-detect local IP for SAN
+    LOCAL_IP=$(hostname -i 2>/dev/null | awk '{print $1}')
+
+    SAN="DNS:localhost,IP:127.0.0.1"
+    if [ -n "$LOCAL_IP" ] && [ "$LOCAL_IP" != "127.0.0.1" ]; then
+        SAN="$SAN,IP:$LOCAL_IP"
     fi
+
+    echo "SAN: $SAN"
 
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
         -keyout "$KEY_FILE" \
         -out "$CERT_FILE" \
-        -subj "/C=IT/ST=State/L=City/O=Organization/CN=$HOST_ONLY" \
+        -subj "/C=IT/ST=State/L=City/O=Organization/CN=localhost" \
         -addext "subjectAltName=$SAN"
 
     echo "SSL certificates generated successfully"
