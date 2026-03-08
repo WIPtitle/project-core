@@ -95,6 +95,11 @@ cleanup() {
     echo "Stopping Docker containers..."
     docker compose down 2>/dev/null || true
 
+    # Restore .git files in submodules
+    for gitfile in "$SCRIPT_DIR"/microservices/*/.git.dev-bak; do
+        [ -e "$gitfile" ] && mv "$gitfile" "${gitfile%.dev-bak}"
+    done
+
     # Delete log files
     rm -f "$GPIO_LOG" "$MP3_LOG"
 
@@ -151,6 +156,19 @@ else
     echo -e "MP3 Player Server: ${RED}FAILED${NC}"
 fi
 
+# Docker BuildKit with git submodules only sees committed files, not local modifications.
+# Temporarily hide .git files in submodules so BuildKit reads the actual filesystem.
+echo -e "\n${YELLOW}Preparing submodules for build...${NC}"
+for gitfile in "$SCRIPT_DIR"/microservices/*/.git; do
+    [ -e "$gitfile" ] && mv "$gitfile" "${gitfile}.dev-bak"
+done
+
+restore_git_files() {
+    for gitfile in "$SCRIPT_DIR"/microservices/*/.git.dev-bak; do
+        [ -e "$gitfile" ] && mv "$gitfile" "${gitfile%.dev-bak}"
+    done
+}
+
 # Start Docker Compose
 echo -e "\n${GREEN}Starting Docker Compose...${NC}"
 echo -e "${YELLOW}Note: Services will connect to GPIO/MP3 via host.docker.internal${NC}"
@@ -158,5 +176,11 @@ echo ""
 
 cd "$SCRIPT_DIR"
 docker compose up --build
+BUILD_EXIT=$?
+
+# Restore .git files after build
+restore_git_files
+
+exit $BUILD_EXIT
 
 # Cleanup will be called on exit

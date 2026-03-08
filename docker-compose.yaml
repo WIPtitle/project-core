@@ -1,27 +1,13 @@
 x-common-variables: &common-variables
   environment:
-    # Hostnames used to connect services to each other.
-    # They are taken from the .env file since they are also used in the docker-compose.yaml.
-    DATABASE_HOSTNAME: ${DATABASE_HOSTNAME}
-    DEVICES_MANAGER_HOSTNAME: ${DEVICES_MANAGER_HOSTNAME}
-    NOTIFICATIONS_MANAGER_HOSTNAME: ${NOTIFICATIONS_MANAGER_HOSTNAME}
-    LOCAL_AUDIO_MANAGER_HOSTNAME: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
-    FRONTEND_HOSTNAME: ${FRONTEND_HOSTNAME}
-    AUTH_HOSTNAME: ${AUTH_HOSTNAME}
-    NTFY_HOSTNAME: ${NTFY_HOSTNAME}
-    HEALTH_CHECKER_HOSTNAME: ${HEALTH_CHECKER_HOSTNAME}
     # Paths of files where credentials are saved.
     # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
     # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
-    # URLs that could be custom
+    # Public URL (used by ntfy and nginx SSL)
     PUBLIC_HOST_URL: ${PUBLIC_HOST_URL}
-    GPIO_MONITOR_URLS: ${GPIO_MONITOR_URLS}
-    MP3_PLAYER_SERVER_URLS: ${MP3_PLAYER_SERVER_URLS}
-    ALWAYS_RECORDING_DURATION_SECONDS: ${ALWAYS_RECORDING_DURATION_SECONDS}
-    ALARM_RECORDING_DURATION_SECONDS: ${ALARM_RECORDING_DURATION_SECONDS}
     # Timezone
     TZ: ${TZ}
 
@@ -29,7 +15,7 @@ services:
   database:
     image: postgres:16.4
     <<: *common-variables
-    hostname: ${DATABASE_HOSTNAME}
+    hostname: db
     volumes:
       - db-data:/var/lib/postgresql/data
       - shared:/shared
@@ -40,11 +26,17 @@ services:
     restart: unless-stopped
     expose:
       - "5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U project-user -d project-database" ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   devices-manager:
     build: microservices/devices-manager
     <<: *common-variables
-    hostname: ${DEVICES_MANAGER_HOSTNAME}
+    hostname: devices-manager
     volumes:
       - devices-manager-data:/var/lib/devices-manager/data
       - shared:/shared
@@ -52,9 +44,12 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
-      - database
-      - local-audio-manager
-      - notifications-manager
+      database:
+        condition: service_healthy
+      local-audio-manager:
+        condition: service_started
+      notifications-manager:
+        condition: service_started
     expose:
       - "8000"
     extra_hosts:
@@ -63,7 +58,7 @@ services:
   notifications-manager:
     build: microservices/notifications-manager
     <<: *common-variables
-    hostname: ${NOTIFICATIONS_MANAGER_HOSTNAME}
+    hostname: notifications-manager
     volumes:
       - notifications-manager-data:/var/lib/notifications-manager/data
       - shared:/shared
@@ -71,15 +66,17 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
-      - ntfy
-      - database
+      ntfy:
+        condition: service_started
+      database:
+        condition: service_healthy
     expose:
       - "8000"
 
   local-audio-manager:
     build: microservices/local-audio-manager
     <<: *common-variables
-    hostname: ${LOCAL_AUDIO_MANAGER_HOSTNAME}
+    hostname: local-audio-manager
     volumes:
       - local-audio-manager-data:/var/lib/local-audio-manager/data
       - shared:/shared
@@ -94,7 +91,7 @@ services:
   auth:
     build: microservices/project-auth
     <<: *common-variables
-    hostname: ${AUTH_HOSTNAME}
+    hostname: project-auth
     volumes:
       - auth-data:/var/lib/auth-data/data
       - shared:/shared
@@ -102,14 +99,15 @@ services:
       - /etc/timezone:/etc/timezone:ro
     restart: unless-stopped
     depends_on:
-      - database
+      database:
+        condition: service_healthy
     expose:
       - "8000"
 
   frontend:
     build: microservices/project-frontend
     <<: *common-variables
-    hostname: ${FRONTEND_HOSTNAME}
+    hostname: frontend
     volumes:
       - shared:/shared
       - /etc/localtime:/etc/localtime:ro
@@ -118,16 +116,21 @@ services:
       - "3000"
     restart: unless-stopped
     depends_on:
-      - database
-      - devices-manager
-      - local-audio-manager
-      - auth
-      - notifications-manager
+      database:
+        condition: service_healthy
+      devices-manager:
+        condition: service_started
+      local-audio-manager:
+        condition: service_started
+      auth:
+        condition: service_started
+      notifications-manager:
+        condition: service_started
 
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
     <<: *common-variables
-    hostname: ${NTFY_HOSTNAME}
+    hostname: ntfy
     volumes:
       - /var/lib/ntfy:/var/lib/ntfy
       - ntfy-data:/var/lib/ntfy/data
@@ -143,7 +146,7 @@ services:
   health-checker:
     image: alpine:3.19
     <<: *common-variables
-    hostname: ${HEALTH_CHECKER_HOSTNAME}
+    hostname: health-checker
     volumes:
       - ./other-entrypoints/health_checker_entrypoint.sh:/health_checker_entrypoint.sh:ro
       - /etc/localtime:/etc/localtime:ro
