@@ -13,13 +13,15 @@ import numpy as np
 from ultralytics import YOLO
 
 # ── Tunable constants ────────────────────────────────────────────────
-MOTION_SENSITIVITY = 50          # 1-100  (higher = more sensitive)
-DETECTION_CONFIDENCE = 50        # 1-100  (higher = stricter YOLO confidence)
+MOTION_SENSITIVITY = 80          # 1-100  (higher = more sensitive)
+DETECTION_CONFIDENCE = 75        # 1-100  (higher = stricter YOLO confidence)
 # ─────────────────────────────────────────────────────────────────────
 
 YOLO_MODEL = "yolo26n"
 DETECTION_WIDTH = 640
 DETECTION_HEIGHT = 360
+DISPLAY_WIDTH = 1280
+DISPLAY_HEIGHT = 720
 DIFF_BLUR_KERNEL = 21
 DIFF_BINARY_THRESHOLD = 25
 
@@ -84,38 +86,32 @@ def main():
             motion_ratio = motion_pixels / total_pixels
             motion_detected = motion_ratio > motion_threshold
 
-            # Draw motion contours in blue
-            contours, _ = cv2.findContours(diff_thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            for c in contours:
-                if cv2.contourArea(c) > 100:
-                    x, y, w, h = cv2.boundingRect(c)
-                    cv2.rectangle(display, (x, y), (x + w, y + h), (255, 0, 0), 1)
-
         prev_gray = gray
 
-        # YOLO person detection
+        # YOLO person detection (only if motion detected)
         person_count = 0
-        results = model(frame, classes=[0], conf=yolo_confidence, verbose=False)
-        boxes = results[0].boxes
-        if boxes is not None and len(boxes):
-            for box, conf in zip(boxes.xyxy.cpu().numpy().astype(int), boxes.conf.cpu().numpy()):
-                x1, y1, x2, y2 = box
-                cv2.rectangle(display, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(display, f"person {conf:.0%}", (x1, y1 - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-                person_count += 1
+        if motion_detected:
+            results = model(frame, classes=[0], conf=yolo_confidence, verbose=False)
+            boxes = results[0].boxes
+            if boxes is not None and len(boxes):
+                for box, conf in zip(boxes.xyxy.cpu().numpy().astype(int), boxes.conf.cpu().numpy()):
+                    x1, y1, x2, y2 = box
+                    cv2.rectangle(display, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(display, f"person {conf:.0%}", (x1, y1 - 5),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    person_count += 1
 
-        # HUD
-        color = (0, 0, 255) if motion_detected else (200, 200, 200)
+        display = cv2.resize(display, (DISPLAY_WIDTH, DISPLAY_HEIGHT))
+
+        # HUD (drawn after resize so text is readable)
         cv2.putText(display, f"MOTION: {'YES' if motion_detected else 'no'}  ratio={motion_ratio:.4f}  thr={motion_threshold:.4f}",
-                    (8, 22), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+                    (16, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
         cv2.putText(display, f"PERSONS: {person_count}  (conf>={yolo_confidence:.0%})",
-                    (8, 44), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0) if person_count else (200, 200, 200), 1)
+                    (16, 76), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
         cv2.putText(display, f"sens={MOTION_SENSITIVITY}  frame={frame_idx}",
-                    (8, 66), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
-
+                    (16, 112), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2)
         cv2.imshow("Detection Tuner", display)
-        key = cv2.waitKey(1) & 0xFF
+        key = cv2.waitKey(333) & 0xFF
         if key == ord('q'):
             break
 
