@@ -53,6 +53,11 @@ class ZoneRouter(RouterWrapper):
 
         @self.router.get("/status/stream")
         async def stream_status(auth_token: str = None):
+            if not auth_token:
+                raise AuthorizationException("auth_token query parameter is required")
+            user = await self._auth_client.get_authenticated_user(f"Bearer {auth_token}")
+            if user is None:
+                raise AuthorizationException("Invalid or expired auth_token")
             status_manager = self._status_manager
 
             async def generate():
