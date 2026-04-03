@@ -1,0 +1,2 @@
+class ValveLockedException(Exception):
+    pass

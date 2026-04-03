@@ -1,0 +1,6 @@
+fastapi==0.112.2
+uvicorn==0.30.6
+psycopg2==2.9.9
+sqlmodel==0.0.22
+httpx==0.26.0
+pytz==2024.1
