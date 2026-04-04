@@ -71,6 +71,24 @@ class ZoneRouter(RouterWrapper):
         async def get_status():
             return await self._service.get_zone_status()
 
+        @self.router.post("/close")
+        async def manual_close_valve(request: Request):
+            await self._require_modify(request)
+            try:
+                return await self._service.close_valve_manual()
+            except Exception as e:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=400, detail=str(e))
+
+        @self.router.post("/{zone_number}/open")
+        async def manual_open_valve(zone_number: str, request: Request):
+            await self._require_modify(request)
+            try:
+                return await self._service.open_valve_manual(zone_number)
+            except Exception as e:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=400, detail=str(e))
+
         @self.router.get("/status/stream")
         async def stream_status(auth_token: str = None):
             if not auth_token:

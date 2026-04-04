@@ -21,6 +21,7 @@ class IrrigationSetup(SQLModel, table=True):
     __tablename__ = "irrigation_setup"
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    color: str = Field(default="#22c55e")  # green-500 default
 
 
 class SetupZoneSchedule(SQLModel, table=True):

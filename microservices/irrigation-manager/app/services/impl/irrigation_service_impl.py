@@ -3,6 +3,7 @@ from datetime import date, time
 from typing import Optional
 
 from app.clients.valve_controller_client import ValveControllerClient
+from app.exceptions.not_found_exception import NotFoundException
 from app.exceptions.valve_locked_exception import ValveLockedException
 from app.models.irrigation_models import (
     ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
@@ -121,12 +122,13 @@ class IrrigationServiceImpl(IrrigationService):
         setup = IrrigationSetup(name=name)
         return self._repo.save_setup(setup)
 
-    async def rename_setup(self, setup_id: int, name: str) -> IrrigationSetup:
+    async def update_setup(self, setup_id: int, name: str, color: str) -> IrrigationSetup:
         await self._require_no_active_valve()
         setup = self._repo.get_setup_by_id(setup_id)
         if setup is None:
-            raise ValueError(f"Setup {setup_id} not found")
+            raise NotFoundException(f"Setup {setup_id} not found")
         setup.name = name
+        setup.color = color
         return self._repo.save_setup(setup)
 
     async def delete_setup(self, setup_id: int) -> None:
@@ -261,3 +263,9 @@ class IrrigationServiceImpl(IrrigationService):
         except Exception as e:
             logger.warning(f"Failed to get zone status: {e}")
             return {"error": "Valve controller unreachable", "active_zone": None}
+
+    async def open_valve_manual(self, zone_number: str) -> dict:
+        return await self._valve_client.open_valve(zone_number, 3600.0)
+
+    async def close_valve_manual(self) -> dict:
+        return await self._valve_client.close_all()

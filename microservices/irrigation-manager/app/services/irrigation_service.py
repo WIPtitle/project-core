@@ -45,7 +45,7 @@ class IrrigationService(ABC):
     async def create_setup(self, name: str) -> IrrigationSetup: pass
 
     @abstractmethod
-    async def rename_setup(self, setup_id: int, name: str) -> IrrigationSetup: pass
+    async def update_setup(self, setup_id: int, name: str, color: str) -> IrrigationSetup: pass
 
     @abstractmethod
     async def delete_setup(self, setup_id: int) -> None: pass
@@ -94,3 +94,9 @@ class IrrigationService(ABC):
 
     @abstractmethod
     async def get_zone_status(self) -> dict: pass
+
+    @abstractmethod
+    async def open_valve_manual(self, zone_number: str) -> dict: pass
+
+    @abstractmethod
+    async def close_valve_manual(self) -> dict: pass

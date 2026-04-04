@@ -39,12 +39,13 @@ class SetupRouter(RouterWrapper):
             return setup.model_dump()
 
         @self.router.put("/{setup_id}")
-        async def rename_setup(setup_id: int, body: dict, request: Request):
+        async def update_setup(setup_id: int, body: dict, request: Request):
             await self._require_modify(request)
             name = body.get("name")
             if not name:
                 return JSONResponse(status_code=400, content={"detail": "name is required"})
-            setup = await self._service.rename_setup(setup_id=setup_id, name=name)
+            color = body.get("color", "#22c55e")
+            setup = await self._service.update_setup(setup_id=setup_id, name=name, color=color)
             return setup.model_dump()
 
         @self.router.delete("/{setup_id}")

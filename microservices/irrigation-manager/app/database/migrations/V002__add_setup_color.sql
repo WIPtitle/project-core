@@ -1,0 +1,1 @@
+ALTER TABLE irrigation_setup ADD COLUMN IF NOT EXISTS color VARCHAR DEFAULT '#22c55e';
