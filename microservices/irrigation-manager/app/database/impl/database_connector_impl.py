@@ -16,8 +16,8 @@ class DatabaseConnectorImpl(DatabaseConnector):
         with open(credentials_file) as f:
             creds = json.load(f)
         db_url = (
-            f"postgresql://{creds['user']}:{creds['password']}"
-            f"@db:5432/{creds['dbname']}"
+            f"postgresql://{creds['POSTGRES_USER']}:{creds['POSTGRES_PASSWORD']}"
+            f"@db:5432/{creds['POSTGRES_DB']}"
         )
         self._engine = create_engine(db_url)
         SQLModel.metadata.create_all(self._engine)
