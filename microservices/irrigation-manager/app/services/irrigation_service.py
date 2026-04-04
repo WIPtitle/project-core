@@ -42,7 +42,7 @@ class IrrigationService(ABC):
     async def get_all_setups(self) -> list[IrrigationSetup]: pass
 
     @abstractmethod
-    async def create_setup(self, name: str) -> IrrigationSetup: pass
+    async def create_setup(self, name: str, color: str = "#22c55e") -> IrrigationSetup: pass
 
     @abstractmethod
     async def update_setup(self, setup_id: int, name: str, color: str) -> IrrigationSetup: pass

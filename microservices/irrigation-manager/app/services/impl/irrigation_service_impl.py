@@ -117,9 +117,9 @@ class IrrigationServiceImpl(IrrigationService):
     async def get_all_setups(self) -> list[IrrigationSetup]:
         return self._repo.get_all_setups()
 
-    async def create_setup(self, name: str) -> IrrigationSetup:
+    async def create_setup(self, name: str, color: str = "#22c55e") -> IrrigationSetup:
         await self._require_no_active_valve()
-        setup = IrrigationSetup(name=name)
+        setup = IrrigationSetup(name=name, color=color)
         return self._repo.save_setup(setup)
 
     async def update_setup(self, setup_id: int, name: str, color: str) -> IrrigationSetup:

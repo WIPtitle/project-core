@@ -35,7 +35,8 @@ class SetupRouter(RouterWrapper):
             name = body.get("name")
             if not name:
                 return JSONResponse(status_code=400, content={"detail": "name is required"})
-            setup = await self._service.create_setup(name=name)
+            color = body.get("color", "#22c55e")
+            setup = await self._service.create_setup(name=name, color=color)
             return setup.model_dump()
 
         @self.router.put("/{setup_id}")
