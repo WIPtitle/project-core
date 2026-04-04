@@ -22,3 +22,6 @@
 [submodule "microservices/gpio-monitor"]
 	path = microservices/gpio-monitor
 	url = https://github.com/WIPtitle/gpio-monitor.git
+[submodule "microservices/valve-controller"]
+	path = microservices/valve-controller
+	url = https://github.com/WIPtitle/valve-controller.git
