@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # Dev Environment Runner
-# Starts GPIO Monitor, MP3 Player Server locally, and docker compose
+# Starts GPIO Monitor, MP3 Player Server, Valve Controller locally, and docker compose
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 # PID files
 GPIO_PID_FILE="$SCRIPT_DIR/.gpio-monitor.pid"
 MP3_PID_FILE="$SCRIPT_DIR/.mp3-player-server.pid"
+VALVE_PID_FILE="$SCRIPT_DIR/.valve-controller.pid"
 
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  Project Core - Dev Environment${NC}"
@@ -30,10 +31,12 @@ mkdir -p "$SCRIPT_DIR/logs"
 # Log files
 GPIO_LOG="$SCRIPT_DIR/logs/gpio-monitor.log"
 MP3_LOG="$SCRIPT_DIR/logs/mp3-player-server.log"
+VALVE_LOG="$SCRIPT_DIR/logs/valve-controller.log"
 
 # Clear old logs on startup
 > "$GPIO_LOG"
 > "$MP3_LOG"
+> "$VALVE_LOG"
 echo -e "${YELLOW}Logs cleared${NC}"
 
 # Create config files if they don't exist
@@ -53,13 +56,26 @@ EOF
     echo -e "${YELLOW}Created: $CONFIG_DIR/mp3-player-server.json${NC}"
 fi
 
+if [ ! -f "$CONFIG_DIR/valve-controller.json" ]; then
+    cat > "$CONFIG_DIR/valve-controller.json" << EOF
+{
+  "port": 8686,
+  "i2c_address": "0x10",
+  "num_zones": 4
+}
+EOF
+    echo -e "${YELLOW}Created: $CONFIG_DIR/valve-controller.json${NC}"
+fi
+
 # Export environment variables for dev paths
 export GPIO_MONITOR_CONFIG_PATH="$CONFIG_DIR/gpio-monitor.json"
 export MP3_PLAYER_SERVER_CONFIG_PATH="$CONFIG_DIR/mp3-player-server.json"
+export VALVE_CONTROLLER_CONFIG_PATH="$CONFIG_DIR/valve-controller.json"
 
 echo -e "${GREEN}Environment:${NC}"
 echo -e "  GPIO_MONITOR_CONFIG_PATH=$GPIO_MONITOR_CONFIG_PATH"
 echo -e "  MP3_PLAYER_SERVER_CONFIG_PATH=$MP3_PLAYER_SERVER_CONFIG_PATH"
+echo -e "  VALVE_CONTROLLER_CONFIG_PATH=$VALVE_CONTROLLER_CONFIG_PATH"
 
 # Cleanup function
 CLEANUP_DONE=false
@@ -91,6 +107,16 @@ cleanup() {
         rm -f "$MP3_PID_FILE"
     fi
 
+    # Stop Valve Controller
+    if [ -f "$VALVE_PID_FILE" ]; then
+        PID=$(cat "$VALVE_PID_FILE")
+        if kill -0 "$PID" 2>/dev/null; then
+            echo "Stopping Valve Controller (PID: $PID)..."
+            kill "$PID" 2>/dev/null || true
+        fi
+        rm -f "$VALVE_PID_FILE"
+    fi
+
     # Stop docker compose
     echo "Stopping Docker containers..."
     docker compose down 2>/dev/null || true
@@ -101,7 +127,7 @@ cleanup() {
     done
 
     # Delete log files
-    rm -f "$GPIO_LOG" "$MP3_LOG"
+    rm -f "$GPIO_LOG" "$MP3_LOG" "$VALVE_LOG"
 
     echo -e "${GREEN}Dev environment stopped.${NC}"
 }
@@ -131,6 +157,14 @@ echo $! > "$MP3_PID_FILE"
 echo -e "MP3 Player Server started on ${GREEN}http://localhost:8888${NC}"
 echo -e "  Log: ${YELLOW}$MP3_LOG${NC}"
 
+# Start Valve Controller
+echo -e "\n${GREEN}Starting Valve Controller...${NC}"
+echo -e "  ${YELLOW}Note: smbus2 not installed on dev → simulation mode active (no real valves controlled)${NC}"
+python3 /home/mattogalvagni/PycharmProjects/valve-controller/valve-controller-main.py > "$VALVE_LOG" 2>&1 &
+echo $! > "$VALVE_PID_FILE"
+echo -e "Valve Controller started on ${GREEN}http://localhost:8686${NC}"
+echo -e "  Log: ${YELLOW}$VALVE_LOG${NC}"
+
 # Wait for services to start
 sleep 2
 
@@ -147,6 +181,12 @@ if curl -s http://localhost:8888/api/status > /dev/null 2>&1; then
     echo -e "MP3 Player Server: ${GREEN}OK${NC}"
 else
     echo -e "MP3 Player Server: ${RED}FAILED${NC}"
+fi
+
+if curl -s http://localhost:8686/api/status > /dev/null 2>&1; then
+    echo -e "Valve Controller: ${GREEN}OK${NC}"
+else
+    echo -e "Valve Controller: ${RED}FAILED${NC}"
 fi
 
 # Docker BuildKit with git submodules only sees committed files, not local modifications.
