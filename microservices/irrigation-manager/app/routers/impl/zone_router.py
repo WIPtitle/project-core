@@ -47,6 +47,26 @@ class ZoneRouter(RouterWrapper):
             zone = await self._service.update_zone_name(zone_id=zone_id, name=name)
             return zone.model_dump()
 
+        @self.router.get("/mismatch")
+        async def get_mismatch():
+            db_zones = await self._service.get_all_zones()
+            db_zone_numbers = {z.zone_number for z in db_zones}
+            try:
+                vc_status = await self._service.get_zone_status()
+                if "error" in vc_status:
+                    return JSONResponse(content={"has_mismatch": False, "unreachable": True})
+                vc_zone_numbers = set(vc_status.get("zones", []))
+            except Exception:
+                return JSONResponse(content={"has_mismatch": False, "unreachable": True})
+            missing_in_controller = sorted(db_zone_numbers - vc_zone_numbers)
+            missing_in_db = sorted(vc_zone_numbers - db_zone_numbers)
+            has_mismatch = bool(missing_in_controller or missing_in_db)
+            return JSONResponse(content={
+                "has_mismatch": has_mismatch,
+                "missing_in_controller": missing_in_controller,
+                "missing_in_db": missing_in_db,
+            })
+
         @self.router.get("/status")
         async def get_status():
             return await self._service.get_zone_status()

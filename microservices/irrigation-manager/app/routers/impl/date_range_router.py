@@ -43,11 +43,14 @@ class DateRangeRouter(RouterWrapper):
                 end_date = date.fromisoformat(f"2000-{end_date_str}")
             except ValueError as e:
                 return JSONResponse(status_code=400, content={"detail": f"Invalid date format (expected MM-DD): {e}"})
-            dr = await self._service.add_date_range(
-                setup_id=setup_id,
-                start_date=start_date,
-                end_date=end_date,
-            )
+            try:
+                dr = await self._service.add_date_range(
+                    setup_id=setup_id,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            except ValueError as e:
+                return JSONResponse(status_code=400, content={"detail": str(e)})
             return dr.model_dump()
 
         @self.router.delete("/{setup_id}/date-ranges/{range_id}")

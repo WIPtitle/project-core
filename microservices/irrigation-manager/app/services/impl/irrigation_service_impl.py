@@ -179,8 +179,9 @@ class IrrigationServiceImpl(IrrigationService):
         if conflicts:
             conflict_list = ", ".join(conflicts)
             raise ValueError(
-                f"Time slot overlaps with existing schedules "
-                f"(remember: 1-minute gap required): {conflict_list}"
+                f"Time slot overlaps with an existing schedule on the same day: {conflict_list}. "
+                f"A 1-minute gap is required between ANY zones on the same day, "
+                f"because only one valve can be open at a time due to water pressure."
             )
 
         schedule = SetupZoneSchedule(
