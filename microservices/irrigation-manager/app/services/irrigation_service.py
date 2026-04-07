@@ -62,10 +62,10 @@ class IrrigationService(ABC):
         self,
         setup_id: int,
         zone_id: int,
-        day_of_week: int,
+        days_of_week: list[int],
         start_time: time,
         end_time: time
-    ) -> SetupZoneSchedule: pass
+    ) -> list[SetupZoneSchedule]: pass
 
     @abstractmethod
     async def delete_schedule(self, schedule_id: int) -> None: pass

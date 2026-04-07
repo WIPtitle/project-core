@@ -149,10 +149,10 @@ class IrrigationServiceImpl(IrrigationService):
         self,
         setup_id: int,
         zone_id: int,
-        day_of_week: int,
+        days_of_week: list[int],
         start_time: time,
         end_time: time
-    ) -> SetupZoneSchedule:
+    ) -> list[SetupZoneSchedule]:
         await self._require_no_active_valve()
 
         if start_time >= end_time:
@@ -161,39 +161,41 @@ class IrrigationServiceImpl(IrrigationService):
         new_start_min = _to_minutes(start_time)
         new_end_min = _to_minutes(end_time)
 
-        existing_schedules = self._repo.get_schedules_for_setup_day(setup_id, day_of_week)
-        conflicts: list[str] = []
+        # Validate all days before creating any schedule
+        for day in days_of_week:
+            existing_schedules = self._repo.get_schedules_for_setup_day(setup_id, day)
+            conflicts: list[str] = []
+            for sched in existing_schedules:
+                ex_start_min = _to_minutes(sched.start_time)
+                ex_end_min = _to_minutes(sched.end_time)
+                overlaps = not (new_end_min + 1 <= ex_start_min or ex_end_min + 1 <= new_start_min)
+                if overlaps:
+                    zone = self._repo.get_zone_by_id(sched.zone_id)
+                    zone_label = zone.name if zone else f"Zone {sched.zone_id}"
+                    start_str = sched.start_time.strftime("%H:%M")
+                    end_str = sched.end_time.strftime("%H:%M")
+                    conflicts.append(f"{zone_label} ({start_str}\u2013{end_str})")
+            if conflicts:
+                day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                conflict_list = ", ".join(conflicts)
+                raise ValueError(
+                    f"Time slot overlaps on {day_names[day]}: {conflict_list}. "
+                    f"A 1-minute gap is required between ANY zones on the same day, "
+                    f"because only one valve can be open at a time due to water pressure."
+                )
 
-        for sched in existing_schedules:
-            ex_start_min = _to_minutes(sched.start_time)
-            ex_end_min = _to_minutes(sched.end_time)
-
-            # Overlap check: NOT (new_end + 1 <= ex_start OR ex_end + 1 <= new_start)
-            overlaps = not (new_end_min + 1 <= ex_start_min or ex_end_min + 1 <= new_start_min)
-            if overlaps:
-                # Resolve zone name for the error message
-                zone = self._repo.get_zone_by_id(sched.zone_id)
-                zone_label = zone.name if zone else f"Zone {sched.zone_id}"
-                start_str = sched.start_time.strftime("%H:%M")
-                end_str = sched.end_time.strftime("%H:%M")
-                conflicts.append(f"{zone_label} ({start_str}\u2013{end_str})")
-
-        if conflicts:
-            conflict_list = ", ".join(conflicts)
-            raise ValueError(
-                f"Time slot overlaps with an existing schedule on the same day: {conflict_list}. "
-                f"A 1-minute gap is required between ANY zones on the same day, "
-                f"because only one valve can be open at a time due to water pressure."
+        # All days validated — create schedules
+        created = []
+        for day in days_of_week:
+            schedule = SetupZoneSchedule(
+                setup_id=setup_id,
+                zone_id=zone_id,
+                day_of_week=day,
+                start_time=start_time,
+                end_time=end_time
             )
-
-        schedule = SetupZoneSchedule(
-            setup_id=setup_id,
-            zone_id=zone_id,
-            day_of_week=day_of_week,
-            start_time=start_time,
-            end_time=end_time
-        )
-        return self._repo.save_schedule(schedule)
+            created.append(self._repo.save_schedule(schedule))
+        return created
 
     async def delete_schedule(self, schedule_id: int) -> None:
         await self._require_no_active_valve()
