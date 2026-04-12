@@ -105,6 +105,7 @@ class IrrigationRepositoryImpl(IrrigationRepository):
                 existing = s.get(IrrigationSetup, setup.id)
                 if existing is not None:
                     existing.name = setup.name
+                    existing.color = setup.color
                     s.add(existing)
                     s.commit()
                     s.refresh(existing)
