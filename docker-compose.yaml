@@ -1,16 +1,20 @@
 x-common-variables: &common-variables
   environment:
-    # Paths of files where credentials are saved.
-    # They are saved in the shared volume so every service can use them.
     PG_CREDENTIALS_FILE: /shared/pg_credentials.json
     NTFY_CREDENTIALS_FILE: /shared/ntfy_credentials.json
-    # The secret key does not need to be shared between services
     AUTH_SECRET_KEY_FILE: /var/lib/auth-data/data/private_key.json
+
+x-logging: &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
 
 services:
   database:
     image: postgres:16.4
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: db
     volumes:
       - db-data:/var/lib/postgresql/data
@@ -29,7 +33,7 @@ services:
 
   devices-manager:
     build: microservices/devices-manager
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: devices-manager
     volumes:
       - devices-manager-data:/var/lib/devices-manager/data
@@ -49,7 +53,7 @@ services:
 
   notifications-manager:
     build: microservices/notifications-manager
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: notifications-manager
     volumes:
       - notifications-manager-data:/var/lib/notifications-manager/data
@@ -65,7 +69,7 @@ services:
 
   local-audio-manager:
     build: microservices/local-audio-manager
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: local-audio-manager
     volumes:
       - local-audio-manager-data:/var/lib/local-audio-manager/data
@@ -78,7 +82,7 @@ services:
 
   irrigation-manager:
     build: microservices/irrigation-manager
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: irrigation-manager
     volumes:
       - shared:/shared
@@ -93,7 +97,7 @@ services:
 
   auth:
     build: microservices/project-auth
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: project-auth
     volumes:
       - auth-data:/var/lib/auth-data/data
@@ -107,7 +111,7 @@ services:
 
   frontend:
     build: microservices/project-frontend
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: frontend
     volumes:
       - shared:/shared
@@ -130,7 +134,7 @@ services:
 
   ntfy:
     image: binwiederhier/ntfy:v2.11.0
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: ntfy
     volumes:
       - /var/lib/ntfy:/var/lib/ntfy
@@ -144,7 +148,7 @@ services:
 
   health-checker:
     image: alpine:3.19
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     hostname: health-checker
     volumes:
       - ./other-entrypoints/health_checker_entrypoint.sh:/health_checker_entrypoint.sh:ro
@@ -157,7 +161,7 @@ services:
 
   nginx:
     image: nginx:1.28.0-alpine
-    <<: *common-variables
+    <<: [*common-variables, *default-logging]
     ports:
       - "80:80"
       - "443:443"
