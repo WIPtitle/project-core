@@ -40,3 +40,10 @@ class SetupDateRange(SQLModel, table=True):
     setup_id: int = Field(foreign_key="irrigation_setup.id")
     start_date: date  # canonical year 2000
     end_date: date
+
+
+class IrrigationCoordinates(SQLModel, table=True):
+    __tablename__ = "irrigation_coordinates"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    latitude: float
+    longitude: float

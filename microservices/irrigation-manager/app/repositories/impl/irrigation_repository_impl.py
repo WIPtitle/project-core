@@ -5,7 +5,8 @@ from sqlmodel import select
 
 from app.database.database_connector import DatabaseConnector
 from app.models.irrigation_models import (
-    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
+    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
+    IrrigationCoordinates
 )
 from app.repositories.irrigation_repository import IrrigationRepository
 
@@ -231,3 +232,34 @@ class IrrigationRepositoryImpl(IrrigationRepository):
             if dr is None:
                 return None
             return s.get(IrrigationSetup, dr.setup_id)
+
+    # -------------------------------------------------------------------------
+    # IrrigationCoordinates
+    # -------------------------------------------------------------------------
+
+    def get_coordinates(self) -> Optional[IrrigationCoordinates]:
+        with self._db.get_new_session() as s:
+            return s.exec(select(IrrigationCoordinates)).first()
+
+    def save_coordinates(self, coords: IrrigationCoordinates) -> IrrigationCoordinates:
+        with self._db.get_new_session() as s:
+            existing = s.exec(select(IrrigationCoordinates)).first()
+            if existing is not None:
+                existing.latitude = coords.latitude
+                existing.longitude = coords.longitude
+                s.add(existing)
+                s.commit()
+                s.refresh(existing)
+                return existing
+            else:
+                s.add(coords)
+                s.commit()
+                s.refresh(coords)
+                return coords
+
+    def delete_coordinates(self) -> None:
+        with self._db.get_new_session() as s:
+            existing = s.exec(select(IrrigationCoordinates)).first()
+            if existing is not None:
+                s.delete(existing)
+                s.commit()

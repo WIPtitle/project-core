@@ -7,6 +7,7 @@ from app.routers.impl.zone_router import ZoneRouter
 from app.routers.impl.setup_router import SetupRouter
 from app.routers.impl.schedule_router import ScheduleRouter
 from app.routers.impl.date_range_router import DateRangeRouter
+from app.routers.impl.coordinates_router import CoordinatesRouter
 
 exception_handlers = get_exception_handlers()
 app = FastAPI()
@@ -20,6 +21,7 @@ routers = [
     SetupRouter(),
     ScheduleRouter(),
     DateRangeRouter(),
+    CoordinatesRouter(),
 ]
 for router in routers:
     app.include_router(router.get_fastapi_router())

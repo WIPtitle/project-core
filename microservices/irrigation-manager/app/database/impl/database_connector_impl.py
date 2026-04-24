@@ -5,7 +5,8 @@ from sqlmodel import SQLModel, Session
 from app.database.database_connector import DatabaseConnector
 # Import all models so they register with SQLModel.metadata
 from app.models.irrigation_models import (
-    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
+    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
+    IrrigationCoordinates
 )
 from app.database.migration_runner import MigrationRunner
 

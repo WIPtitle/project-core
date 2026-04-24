@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from datetime import date
 from typing import Optional
 from app.models.irrigation_models import (
-    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
+    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
+    IrrigationCoordinates
 )
 
 
@@ -86,3 +87,13 @@ class IrrigationRepository(ABC):
 
     @abstractmethod
     def find_setup_for_date(self, canonical_date: date) -> Optional[IrrigationSetup]: pass
+
+    # IrrigationCoordinates
+    @abstractmethod
+    def get_coordinates(self) -> Optional[IrrigationCoordinates]: pass
+
+    @abstractmethod
+    def save_coordinates(self, coords: IrrigationCoordinates) -> IrrigationCoordinates: pass
+
+    @abstractmethod
+    def delete_coordinates(self) -> None: pass

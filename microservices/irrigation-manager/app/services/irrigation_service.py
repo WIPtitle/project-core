@@ -3,7 +3,8 @@ from datetime import date, time
 from typing import Optional
 
 from app.models.irrigation_models import (
-    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
+    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
+    IrrigationCoordinates
 )
 
 
@@ -100,3 +101,16 @@ class IrrigationService(ABC):
 
     @abstractmethod
     async def close_valve_manual(self) -> dict: pass
+
+    # -------------------------------------------------------------------------
+    # Coordinates
+    # -------------------------------------------------------------------------
+
+    @abstractmethod
+    async def get_coordinates(self) -> Optional[IrrigationCoordinates]: pass
+
+    @abstractmethod
+    async def set_coordinates(self, latitude: float, longitude: float) -> IrrigationCoordinates: pass
+
+    @abstractmethod
+    async def delete_coordinates(self) -> None: pass

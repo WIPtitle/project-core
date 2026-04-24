@@ -6,7 +6,8 @@ from app.clients.valve_controller_client import ValveControllerClient
 from app.exceptions.not_found_exception import NotFoundException
 from app.exceptions.valve_locked_exception import ValveLockedException
 from app.models.irrigation_models import (
-    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange
+    ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
+    IrrigationCoordinates
 )
 from app.repositories.irrigation_repository import IrrigationRepository
 from app.services.irrigation_service import IrrigationService
@@ -271,3 +272,17 @@ class IrrigationServiceImpl(IrrigationService):
 
     async def close_valve_manual(self) -> dict:
         return await self._valve_client.close_all()
+
+    # -------------------------------------------------------------------------
+    # Coordinates
+    # -------------------------------------------------------------------------
+
+    async def get_coordinates(self) -> Optional[IrrigationCoordinates]:
+        return self._repo.get_coordinates()
+
+    async def set_coordinates(self, latitude: float, longitude: float) -> IrrigationCoordinates:
+        coords = IrrigationCoordinates(latitude=latitude, longitude=longitude)
+        return self._repo.save_coordinates(coords)
+
+    async def delete_coordinates(self) -> None:
+        self._repo.delete_coordinates()

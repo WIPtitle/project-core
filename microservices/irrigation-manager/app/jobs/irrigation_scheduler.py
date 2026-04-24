@@ -14,6 +14,8 @@ class IrrigationScheduler:
         self._repo = repo
         self._valve_client = valve_client
         self._running = False
+        self._rain_checked_today: Optional[bool] = None
+        self._rain_check_date: Optional[str] = None
 
     def start(self):
         self._running = True
@@ -41,6 +43,32 @@ class IrrigationScheduler:
             next_minute = (now // 60 + 1) * 60 + 2
             time.sleep(max(1, next_minute - time.time()))
 
+    def _has_rained_today(self, latitude: float, longitude: float) -> bool:
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        if self._rain_check_date == today_str and self._rain_checked_today is not None:
+            return self._rain_checked_today
+
+        try:
+            url = (
+                f"https://api.open-meteo.com/v1/forecast"
+                f"?latitude={latitude}&longitude={longitude}"
+                f"&hourly=precipitation&forecast_days=1"
+            )
+            r = httpx.get(url, timeout=10.0)
+            data = r.json()
+            precipitation_values = data.get("hourly", {}).get("precipitation", [])
+            rained = any(v > 0 for v in precipitation_values if v is not None)
+            logger.info(
+                f"Rain check: lat={latitude}, lon={longitude}, "
+                f"precipitation={precipitation_values}, rained={rained}"
+            )
+            self._rain_checked_today = rained
+            self._rain_check_date = today_str
+            return rained
+        except Exception as e:
+            logger.warning(f"Rain check failed (irrigation will proceed): {e}")
+            return False
+
     def _tick(self):
         tz = self._get_timezone()
         if tz is None:
@@ -55,6 +83,12 @@ class IrrigationScheduler:
         active_setup = self._repo.find_setup_for_date(canonical_today)
         if active_setup is None:
             return
+
+        coords = self._repo.get_coordinates()
+        if coords is not None:
+            if self._has_rained_today(coords.latitude, coords.longitude):
+                logger.info("Scheduler: rain detected today, skipping all scheduled irrigations")
+                return
 
         schedules = self._repo.get_schedules_for_setup_day(active_setup.id, day_of_week)
         for sched in schedules:
