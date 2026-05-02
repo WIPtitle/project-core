@@ -54,7 +54,7 @@ class IrrigationScheduler:
                 f"?latitude={latitude}&longitude={longitude}"
                 f"&hourly=precipitation&forecast_days=1"
             )
-            r = httpx.get(url, timeout=10.0)
+            r = httpx.get(url, timeout=30.0)
             data = r.json()
             precipitation_values = data.get("hourly", {}).get("precipitation", [])
             rained = any(v > 0 for v in precipitation_values if v is not None)
