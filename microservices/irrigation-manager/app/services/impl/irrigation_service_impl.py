@@ -268,7 +268,7 @@ class IrrigationServiceImpl(IrrigationService):
             return {"error": "Valve controller unreachable", "active_zone": None}
 
     async def open_valve_manual(self, zone_number: str) -> dict:
-        return await self._valve_client.open_valve(zone_number, 3600.0)
+        return await self._valve_client.open_valve(zone_number, 600.0)
 
     async def close_valve_manual(self) -> dict:
         return await self._valve_client.close_all()
