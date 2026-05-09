@@ -7,6 +7,11 @@ import pytz
 import httpx
 
 logger = logging.getLogger("irrigation-manager")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+    logger.addHandler(_handler)
 
 
 class IrrigationScheduler:
@@ -114,16 +119,32 @@ class IrrigationScheduler:
         vs = self._repo.get_valve_server()
         if not vs:
             return
+
+        status_before = None
         try:
-            r = httpx.post(
-                f"{vs.url.rstrip('/')}/api/valve/{zone_number}/open?duration={duration_seconds}",
-                timeout=10.0
-            )
+            sr = httpx.get(f"{vs.url.rstrip('/')}/api/status", timeout=5.0)
+            status_before = sr.json()
+        except Exception:
+            pass
+
+        url = f"{vs.url.rstrip('/')}/api/valve/{zone_number}/open?duration={duration_seconds}"
+        try:
+            r = httpx.post(url, timeout=10.0)
             if r.status_code == 200:
-                logger.info(f"Scheduler: zone {zone_number} opened successfully")
+                logger.warning(
+                    f"Scheduler: zone {zone_number} OPENED for {duration_seconds}s | "
+                    f"status_before={status_before} | response={r.text}"
+                )
             elif r.status_code == 409:
-                logger.warning(f"Scheduler: zone {zone_number} conflict: {r.text}")
+                logger.warning(
+                    f"Scheduler: zone {zone_number} CONFLICT | "
+                    f"wanted_duration={duration_seconds}s | "
+                    f"status_before={status_before} | response={r.text}"
+                )
             else:
-                logger.error(f"Scheduler: zone {zone_number} failed ({r.status_code})")
+                logger.error(
+                    f"Scheduler: zone {zone_number} FAILED ({r.status_code}) | "
+                    f"url={url} | response={r.text}"
+                )
         except Exception as e:
             logger.error(f"Scheduler: failed to open zone {zone_number}: {e}")
