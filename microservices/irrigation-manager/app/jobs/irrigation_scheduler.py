@@ -1,10 +1,12 @@
 import threading
 import time
 import logging
-from datetime import datetime, date
+from datetime import datetime
 from typing import Optional
+
 import pytz
-import httpx
+
+from app.services.rain_adjuster import RainAdjuster
 
 logger = logging.getLogger("irrigation-manager")
 logger.setLevel(logging.DEBUG)
@@ -15,12 +17,11 @@ if not logger.handlers:
 
 
 class IrrigationScheduler:
-    def __init__(self, repo, valve_client):
+    def __init__(self, repo, valve_client, rain_adjuster: Optional[RainAdjuster] = None):
         self._repo = repo
         self._valve_client = valve_client
+        self._rain_adjuster = rain_adjuster or RainAdjuster()
         self._running = False
-        self._rain_checked_today: Optional[bool] = None
-        self._rain_check_date: Optional[str] = None
 
     def start(self):
         self._running = True
@@ -43,45 +44,19 @@ class IrrigationScheduler:
                 self._tick()
             except Exception as e:
                 logger.error(f"Scheduler tick error: {e}")
-            # Sleep until next minute boundary + 2s buffer
             now = time.time()
             next_minute = (now // 60 + 1) * 60 + 2
             time.sleep(max(1, next_minute - time.time()))
-
-    def _has_rained_today(self, latitude: float, longitude: float) -> bool:
-        today_str = datetime.now().strftime("%Y-%m-%d")
-        if self._rain_check_date == today_str and self._rain_checked_today is not None:
-            return self._rain_checked_today
-
-        try:
-            url = (
-                f"https://api.open-meteo.com/v1/forecast"
-                f"?latitude={latitude}&longitude={longitude}"
-                f"&hourly=precipitation&forecast_days=1"
-            )
-            r = httpx.get(url, timeout=30.0)
-            data = r.json()
-            precipitation_values = data.get("hourly", {}).get("precipitation", [])
-            rained = any(v > 0 for v in precipitation_values if v is not None)
-            logger.info(
-                f"Rain check: lat={latitude}, lon={longitude}, "
-                f"precipitation={precipitation_values}, rained={rained}"
-            )
-            self._rain_checked_today = rained
-            self._rain_check_date = today_str
-            return rained
-        except Exception as e:
-            logger.warning(f"Rain check failed (irrigation will proceed): {e}")
-            return False
 
     def _tick(self):
         tz = self._get_timezone()
         if tz is None:
             return
 
+        from datetime import date
         now_local = datetime.now(tz)
         canonical_today = date(2000, now_local.month, now_local.day)
-        day_of_week = now_local.weekday()  # 0=Monday
+        day_of_week = now_local.weekday()
         current_hour = now_local.hour
         current_minute = now_local.minute
 
@@ -89,29 +64,43 @@ class IrrigationScheduler:
         if active_setup is None:
             return
 
+        factor = 1.0
         coords = self._repo.get_coordinates()
         if coords is not None:
-            if self._has_rained_today(coords.latitude, coords.longitude):
-                logger.info("Scheduler: rain detected today, skipping all scheduled irrigations")
-                return
+            vs = self._repo.get_valve_server()
+            tz_name = vs.timezone if vs else "UTC"
+            factor = self._rain_adjuster.get_irrigation_factor(
+                coords.latitude, coords.longitude, tz_name
+            )
 
         schedules = self._repo.get_schedules_for_setup_day(active_setup.id, day_of_week)
         for sched in schedules:
             if sched.start_time.hour == current_hour and sched.start_time.minute == current_minute:
-                duration_seconds = (
+                base_duration = (
                     (sched.end_time.hour * 60 + sched.end_time.minute) -
                     (sched.start_time.hour * 60 + sched.start_time.minute)
                 ) * 60
+
+                adjusted_duration = base_duration * factor
+
+                if adjusted_duration < 60:
+                    logger.info(
+                        f"Scheduler: skipping zone (adjusted duration {adjusted_duration:.0f}s < 60s, "
+                        f"factor={factor:.2f})"
+                    )
+                    continue
+
                 zone = self._repo.get_zone_by_id(sched.zone_id)
                 if zone is None:
                     continue
                 logger.info(
-                    f"Scheduler: opening zone {zone.zone_number} for {duration_seconds}s "
-                    f"(setup={active_setup.name}, day={day_of_week})"
+                    f"Scheduler: opening zone {zone.zone_number} for {adjusted_duration:.0f}s "
+                    f"(base={base_duration}s, factor={factor:.2f}, "
+                    f"setup={active_setup.name}, day={day_of_week})"
                 )
                 threading.Thread(
                     target=self._open_valve_sync,
-                    args=(zone.zone_number, duration_seconds),
+                    args=(zone.zone_number, adjusted_duration),
                     daemon=True
                 ).start()
 
@@ -122,11 +111,13 @@ class IrrigationScheduler:
 
         status_before = None
         try:
+            import httpx
             sr = httpx.get(f"{vs.url.rstrip('/')}/api/status", timeout=5.0)
             status_before = sr.json()
         except Exception:
             pass
 
+        import httpx
         url = f"{vs.url.rstrip('/')}/api/valve/{zone_number}/open?duration={duration_seconds}"
         try:
             r = httpx.post(url, timeout=10.0)
