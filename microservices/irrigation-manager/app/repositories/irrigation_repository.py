@@ -3,7 +3,7 @@ from datetime import date
 from typing import Optional
 from app.models.irrigation_models import (
     ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
-    IrrigationCoordinates
+    IrrigationCoordinates, DailyRainFactor
 )
 
 
@@ -97,3 +97,10 @@ class IrrigationRepository(ABC):
 
     @abstractmethod
     def delete_coordinates(self) -> None: pass
+
+    # DailyRainFactor
+    @abstractmethod
+    def get_rain_factor(self, target_date: date) -> Optional["DailyRainFactor"]: pass
+
+    @abstractmethod
+    def save_rain_factor(self, rf: "DailyRainFactor") -> "DailyRainFactor": pass

@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import time, date
+from datetime import time, date, datetime
 from sqlmodel import SQLModel, Field
 
 
@@ -47,3 +47,15 @@ class IrrigationCoordinates(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     latitude: float
     longitude: float
+
+
+class DailyRainFactor(SQLModel, table=True):
+    __tablename__ = "daily_rain_factor"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    target_date: date = Field(unique=True)
+    factor: float
+    effective_mm: float
+    old_mm: float
+    recent_mm: float
+    forecast_mm: float
+    fetched_at: datetime

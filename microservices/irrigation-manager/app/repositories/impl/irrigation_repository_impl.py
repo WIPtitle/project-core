@@ -6,7 +6,7 @@ from sqlmodel import select
 from app.database.database_connector import DatabaseConnector
 from app.models.irrigation_models import (
     ValveServer, IrrigationZone, IrrigationSetup, SetupZoneSchedule, SetupDateRange,
-    IrrigationCoordinates
+    IrrigationCoordinates, DailyRainFactor
 )
 from app.repositories.irrigation_repository import IrrigationRepository
 
@@ -263,3 +263,35 @@ class IrrigationRepositoryImpl(IrrigationRepository):
             if existing is not None:
                 s.delete(existing)
                 s.commit()
+
+    # -------------------------------------------------------------------------
+    # DailyRainFactor
+    # -------------------------------------------------------------------------
+
+    def get_rain_factor(self, target_date: date) -> Optional[DailyRainFactor]:
+        with self._db.get_new_session() as s:
+            return s.exec(
+                select(DailyRainFactor).where(DailyRainFactor.target_date == target_date)
+            ).first()
+
+    def save_rain_factor(self, rf: DailyRainFactor) -> DailyRainFactor:
+        with self._db.get_new_session() as s:
+            existing = s.exec(
+                select(DailyRainFactor).where(DailyRainFactor.target_date == rf.target_date)
+            ).first()
+            if existing is not None:
+                existing.factor = rf.factor
+                existing.effective_mm = rf.effective_mm
+                existing.old_mm = rf.old_mm
+                existing.recent_mm = rf.recent_mm
+                existing.forecast_mm = rf.forecast_mm
+                existing.fetched_at = rf.fetched_at
+                s.add(existing)
+                s.commit()
+                s.refresh(existing)
+                return existing
+            else:
+                s.add(rf)
+                s.commit()
+                s.refresh(rf)
+                return rf
