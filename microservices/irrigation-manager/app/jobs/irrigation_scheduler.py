@@ -2,11 +2,8 @@ import threading
 import time
 import logging
 from datetime import datetime
-from typing import Optional
 
 import pytz
-
-from app.services.rain_adjuster import RainAdjuster
 
 logger = logging.getLogger("irrigation-manager")
 logger.setLevel(logging.DEBUG)
@@ -17,10 +14,9 @@ if not logger.handlers:
 
 
 class IrrigationScheduler:
-    def __init__(self, repo, valve_client, rain_adjuster: Optional[RainAdjuster] = None):
+    def __init__(self, repo, valve_client):
         self._repo = repo
         self._valve_client = valve_client
-        self._rain_adjuster = rain_adjuster or RainAdjuster()
         self._running = False
 
     def start(self):
@@ -71,12 +67,12 @@ class IrrigationScheduler:
             return
 
         factor = 1.0
-        coords = self._repo.get_coordinates()
-        if coords is not None:
-            vs = self._repo.get_valve_server()
-            tz_name = vs.timezone if vs else "UTC"
-            factor = self._rain_adjuster.get_irrigation_factor(
-                coords.latitude, coords.longitude, tz_name
+        rain_data = self._repo.get_rain_factor(now_local.date())
+        if rain_data is not None:
+            factor = rain_data.factor
+            logger.info(
+                f"Scheduler: using rain factor={factor:.2f} "
+                f"(effective={rain_data.effective_mm:.1f}mm)"
             )
 
         for sched in matching:
@@ -113,15 +109,14 @@ class IrrigationScheduler:
         if not vs:
             return
 
+        import httpx
         status_before = None
         try:
-            import httpx
             sr = httpx.get(f"{vs.url.rstrip('/')}/api/status", timeout=5.0)
             status_before = sr.json()
         except Exception:
             pass
 
-        import httpx
         url = f"{vs.url.rstrip('/')}/api/valve/{zone_number}/open?duration={duration_seconds}"
         try:
             r = httpx.post(url, timeout=10.0)
