@@ -64,6 +64,12 @@ class IrrigationScheduler:
         if active_setup is None:
             return
 
+        schedules = self._repo.get_schedules_for_setup_day(active_setup.id, day_of_week)
+        matching = [s for s in schedules
+                    if s.start_time.hour == current_hour and s.start_time.minute == current_minute]
+        if not matching:
+            return
+
         factor = 1.0
         coords = self._repo.get_coordinates()
         if coords is not None:
@@ -73,36 +79,34 @@ class IrrigationScheduler:
                 coords.latitude, coords.longitude, tz_name
             )
 
-        schedules = self._repo.get_schedules_for_setup_day(active_setup.id, day_of_week)
-        for sched in schedules:
-            if sched.start_time.hour == current_hour and sched.start_time.minute == current_minute:
-                base_duration = (
-                    (sched.end_time.hour * 60 + sched.end_time.minute) -
-                    (sched.start_time.hour * 60 + sched.start_time.minute)
-                ) * 60
+        for sched in matching:
+            base_duration = (
+                (sched.end_time.hour * 60 + sched.end_time.minute) -
+                (sched.start_time.hour * 60 + sched.start_time.minute)
+            ) * 60
 
-                adjusted_duration = base_duration * factor
+            adjusted_duration = base_duration * factor
 
-                if adjusted_duration < 60:
-                    logger.info(
-                        f"Scheduler: skipping zone (adjusted duration {adjusted_duration:.0f}s < 60s, "
-                        f"factor={factor:.2f})"
-                    )
-                    continue
-
-                zone = self._repo.get_zone_by_id(sched.zone_id)
-                if zone is None:
-                    continue
+            if adjusted_duration < 60:
                 logger.info(
-                    f"Scheduler: opening zone {zone.zone_number} for {adjusted_duration:.0f}s "
-                    f"(base={base_duration}s, factor={factor:.2f}, "
-                    f"setup={active_setup.name}, day={day_of_week})"
+                    f"Scheduler: skipping zone (adjusted duration {adjusted_duration:.0f}s < 60s, "
+                    f"factor={factor:.2f})"
                 )
-                threading.Thread(
-                    target=self._open_valve_sync,
-                    args=(zone.zone_number, adjusted_duration),
-                    daemon=True
-                ).start()
+                continue
+
+            zone = self._repo.get_zone_by_id(sched.zone_id)
+            if zone is None:
+                continue
+            logger.info(
+                f"Scheduler: opening zone {zone.zone_number} for {adjusted_duration:.0f}s "
+                f"(base={base_duration}s, factor={factor:.2f}, "
+                f"setup={active_setup.name}, day={day_of_week})"
+            )
+            threading.Thread(
+                target=self._open_valve_sync,
+                args=(zone.zone_number, adjusted_duration),
+                daemon=True
+            ).start()
 
     def _open_valve_sync(self, zone_number: str, duration_seconds: float):
         vs = self._repo.get_valve_server()
