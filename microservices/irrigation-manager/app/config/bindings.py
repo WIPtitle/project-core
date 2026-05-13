@@ -41,6 +41,7 @@ from app.services.irrigation_service import IrrigationService
 from app.utils.valve_status_manager import ValveStatusManager
 from app.jobs.irrigation_scheduler import IrrigationScheduler
 from app.services.rain_adjuster import RainAdjuster
+from app.jobs.rain_fetch_job import RainFetchJob
 
 db = DatabaseConnectorImpl()
 auth_client = AuthClient()
@@ -49,7 +50,8 @@ repo = IrrigationRepositoryImpl(db)
 service = IrrigationServiceImpl(repo, valve_client)
 status_manager = ValveStatusManager(valve_client)
 rain_adjuster = RainAdjuster()
-scheduler = IrrigationScheduler(repo, valve_client, rain_adjuster)
+rain_fetch_job = RainFetchJob(repo, rain_adjuster)
+scheduler = IrrigationScheduler(repo, valve_client)
 
 # Restore valve_client URL from DB if already configured
 _vs = repo.get_valve_server()

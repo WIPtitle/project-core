@@ -1,7 +1,7 @@
 import asyncio
 from fastapi import FastAPI
 from app.config.handlers import get_exception_handlers
-from app.config.bindings import status_manager, scheduler
+from app.config.bindings import status_manager, scheduler, rain_fetch_job
 from app.routers.impl.config_router import ConfigRouter
 from app.routers.impl.zone_router import ZoneRouter
 from app.routers.impl.setup_router import SetupRouter
@@ -31,4 +31,5 @@ for router in routers:
 async def _startup():
     status_manager.set_main_loop(asyncio.get_running_loop())
     status_manager.start()
+    rain_fetch_job.start()
     scheduler.start()
