@@ -282,8 +282,7 @@ class IrrigationRepositoryImpl(IrrigationRepository):
             if existing is not None:
                 existing.factor = rf.factor
                 existing.effective_mm = rf.effective_mm
-                existing.old_mm = rf.old_mm
-                existing.recent_mm = rf.recent_mm
+                existing.past_mm = rf.past_mm
                 existing.forecast_mm = rf.forecast_mm
                 existing.fetched_at = rf.fetched_at
                 s.add(existing)

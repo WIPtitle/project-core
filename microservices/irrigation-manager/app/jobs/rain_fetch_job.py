@@ -92,8 +92,7 @@ class RainFetchJob:
                     target_date=today,
                     factor=result["factor"],
                     effective_mm=result["effective_mm"],
-                    old_mm=result["old_mm"],
-                    recent_mm=result["recent_mm"],
+                    past_mm=result["past_mm"],
                     forecast_mm=result["forecast_mm"],
                     fetched_at=datetime.now(pytz.UTC),
                 )
@@ -101,7 +100,7 @@ class RainFetchJob:
                 logger.info(
                     f"Rain fetch: saved factor={result['factor']:.2f} for {today} "
                     f"(effective={result['effective_mm']:.1f}mm, "
-                    f"old={result['old_mm']:.1f}mm, recent={result['recent_mm']:.1f}mm, "
+                    f"past_72h={result['past_mm']:.1f}mm, "
                     f"forecast={result['forecast_mm']:.1f}mm)"
                 )
                 return

@@ -26,10 +26,10 @@ class TestRainFetchJob:
     def test_fetch_and_persist_saves_to_repo(self):
         repo = MagicMock()
         adj = MagicMock()
-        adj.fetch_precipitation.return_value = ([0.0] * 48, [0.0] * 6)
+        adj.fetch_precipitation.return_value = ([0.0] * 72, [0.0] * 6)
         adj.compute_factor.return_value = {
             "factor": 0.7, "effective_mm": 3.0,
-            "old_mm": 2.0, "recent_mm": 1.0, "forecast_mm": 2.0,
+            "past_mm": 3.0, "forecast_mm": 0.0,
         }
         repo.get_rain_factor.return_value = None
 
@@ -46,7 +46,7 @@ class TestRainFetchJob:
         adj = MagicMock()
         repo.get_rain_factor.return_value = DailyRainFactor(
             id=1, target_date=date.today(), factor=0.5,
-            effective_mm=5.0, old_mm=4.0, recent_mm=1.0,
+            effective_mm=5.0, past_mm=5.0,
             forecast_mm=0.0, fetched_at=datetime.now()
         )
 
@@ -64,11 +64,11 @@ class TestRainFetchJob:
         adj.fetch_precipitation.side_effect = [
             RuntimeError("empty body"),
             RuntimeError("HTTP 429"),
-            ([0.0] * 48, [0.0] * 6),
+            ([0.0] * 72, [0.0] * 6),
         ]
         adj.compute_factor.return_value = {
             "factor": 1.0, "effective_mm": 0.0,
-            "old_mm": 0.0, "recent_mm": 0.0, "forecast_mm": 0.0,
+            "past_mm": 0.0, "forecast_mm": 0.0,
         }
 
         job = self._make_job(repo=repo, rain_adjuster=adj)

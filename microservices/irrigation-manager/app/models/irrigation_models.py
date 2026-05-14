@@ -55,7 +55,6 @@ class DailyRainFactor(SQLModel, table=True):
     target_date: date = Field(unique=True)
     factor: float
     effective_mm: float
-    old_mm: float
-    recent_mm: float
+    past_mm: float
     forecast_mm: float
     fetched_at: datetime

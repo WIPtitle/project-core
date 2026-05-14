@@ -5,12 +5,10 @@ import httpx
 
 logger = logging.getLogger("irrigation-manager")
 
-PAST_HOURS = 48
-RECENT_HOURS = 24
-OLD_DISCOUNT = 0.5
+PAST_HOURS = 72
 FORECAST_HOURS = 6
 FORECAST_DISCOUNT = 0.5
-RAIN_THRESHOLD_MM = 10.0
+RAIN_HALF_MM = 14.0
 
 
 class RainAdjuster:
@@ -41,25 +39,15 @@ class RainAdjuster:
         safe_past = [v if v is not None else 0.0 for v in past_values]
         safe_forecast = [v if v is not None else 0.0 for v in forecast_values]
 
-        old = safe_past[:PAST_HOURS - RECENT_HOURS]
-        recent = safe_past[PAST_HOURS - RECENT_HOURS:]
-
-        old_mm = sum(old)
-        recent_mm = sum(recent)
+        past_mm = sum(safe_past)
         forecast_mm = sum(safe_forecast)
-        effective_mm = recent_mm + (old_mm * OLD_DISCOUNT) + (forecast_mm * FORECAST_DISCOUNT)
+        effective_mm = past_mm + (forecast_mm * FORECAST_DISCOUNT)
 
-        if effective_mm >= RAIN_THRESHOLD_MM:
-            factor = 0.0
-        elif effective_mm <= 0:
-            factor = 1.0
-        else:
-            factor = 1.0 - (effective_mm / RAIN_THRESHOLD_MM)
+        factor = 1.0 / (1.0 + (effective_mm / RAIN_HALF_MM) ** 2)
 
         return {
             "factor": factor,
             "effective_mm": effective_mm,
-            "old_mm": old_mm,
-            "recent_mm": recent_mm,
+            "past_mm": past_mm,
             "forecast_mm": forecast_mm,
         }
