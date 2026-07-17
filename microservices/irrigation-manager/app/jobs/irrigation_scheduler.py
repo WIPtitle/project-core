@@ -110,22 +110,26 @@ class IrrigationScheduler:
             return
 
         import httpx
+        base = vs.url.rstrip('/')
         status_before = None
         try:
-            sr = httpx.get(f"{vs.url.rstrip('/')}/api/status", timeout=5.0)
+            sr = httpx.get(f"{base}/api/status", timeout=5.0)
             status_before = sr.json()
         except Exception:
             pass
 
-        url = f"{vs.url.rstrip('/')}/api/valve/{zone_number}/open?duration={duration_seconds}"
+        url = f"{base}/api/valve/{zone_number}/open?duration={duration_seconds}"
+        arm_watchdog = False
         try:
             r = httpx.post(url, timeout=10.0)
             if r.status_code == 200:
+                arm_watchdog = True
                 logger.warning(
                     f"Scheduler: zone {zone_number} OPENED for {duration_seconds}s | "
                     f"status_before={status_before} | response={r.text}"
                 )
             elif r.status_code == 409:
+                # Rejected — a different zone is active; its own watchdog covers it.
                 logger.warning(
                     f"Scheduler: zone {zone_number} CONFLICT | "
                     f"wanted_duration={duration_seconds}s | "
@@ -137,4 +141,73 @@ class IrrigationScheduler:
                     f"url={url} | response={r.text}"
                 )
         except Exception as e:
-            logger.error(f"Scheduler: failed to open zone {zone_number}: {e}")
+            # Timeout/network error: the controller MAY have opened the valve anyway
+            # (the request can arrive even if the response is lost). Arm the safety
+            # watchdog so the valve gets force-closed regardless.
+            arm_watchdog = True
+            logger.error(
+                f"Scheduler: open of zone {zone_number} did not confirm ({e}) — "
+                f"arming safety watchdog anyway"
+            )
+
+        if arm_watchdog:
+            threading.Thread(
+                target=self._watchdog_force_close,
+                args=(zone_number, duration_seconds),
+                daemon=True,
+            ).start()
+
+    def _watchdog_force_close(self, zone_number: str, duration_seconds: float, margin: float = 30.0):
+        """Manager-side safety net (this host has a reliable, NTP-synced clock).
+
+        After the zone's intended duration + margin, ensure the valve is closed.
+        This is fully independent of the controller's own auto-close and of the
+        valve-controller Pi's (broken) clock: if the controller ever fails to
+        auto-close, this force-closes the specific zone. Timing uses a
+        monotonic-relative countdown so it is immune to clock steps on this host too.
+        """
+        deadline = time.monotonic() + float(duration_seconds) + margin
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            time.sleep(min(5.0, remaining))
+
+        vs = self._repo.get_valve_server()
+        if not vs:
+            return
+        base = vs.url.rstrip('/')
+
+        import httpx
+        for attempt in range(6):
+            try:
+                # Close only this specific zone: the controller returns 409 if a
+                # different (later) zone is now active, and 400 if nothing is open —
+                # both mean our zone is not stuck, so they are safe no-ops.
+                r = httpx.post(f"{base}/api/valve/{zone_number}/close", timeout=8.0)
+                if r.status_code == 200:
+                    logger.critical(
+                        f"Watchdog: zone {zone_number} was STILL OPEN "
+                        f"{duration_seconds}s+{margin}s after its scheduled open — "
+                        f"FORCE-CLOSED it. response={r.text}"
+                    )
+                    return
+                if r.status_code == 400:
+                    logger.info(f"Watchdog: zone {zone_number} already closed (OK).")
+                    return
+                if r.status_code == 409:
+                    logger.info(f"Watchdog: zone {zone_number} not the active zone (OK).")
+                    return
+                logger.error(
+                    f"Watchdog: unexpected {r.status_code} closing zone {zone_number}: {r.text}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Watchdog: attempt {attempt + 1}/6 to force-close zone {zone_number} failed: {e}"
+                )
+            time.sleep(10)
+
+        logger.critical(
+            f"Watchdog: could NOT reach the valve controller to force-close zone "
+            f"{zone_number} after retries — valve may be stuck open!"
+        )
